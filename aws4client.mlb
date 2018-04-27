@@ -1,0 +1,13 @@
+local
+    $(SML_LIB)/basis/basis.mlb
+
+    sha2_sml/libsha2sml.mlb
+    extword8vector.sml
+    hmac.mlb
+
+    httpclient.mlb
+
+    $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+in
+    aws4client.sml
+end

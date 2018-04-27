@@ -1,0 +1,11 @@
+Library
+    structure URI
+    structure HttpHeader
+    structure HttpRequest
+    structure HttpClient
+is
+    $/basis.cm
+    uri.sml
+    httpheader.sml
+    httprequest.sml
+    httpclient.sml

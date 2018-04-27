@@ -1,0 +1,7 @@
+local
+    $(SML_LIB)/basis/basis.mlb
+    sha2_sml/libsha2sml.mlb
+    extword8vector.mlb
+in
+    hmac.sml
+end

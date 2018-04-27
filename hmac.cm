@@ -1,0 +1,7 @@
+Library
+    structure HMAC
+is
+    $/basis.cm
+    sha2_sml/libsha2sml.cm
+    extword8vector.cm
+    hmac.sml

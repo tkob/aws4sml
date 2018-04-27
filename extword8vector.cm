@@ -1,0 +1,5 @@
+Library
+    structure ExtWord8Vector
+is
+    $/basis.cm
+    extword8vector.sml
