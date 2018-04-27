@@ -1,0 +1,7 @@
+[submodule "sml-curl"]
+	path = sml-curl
+	url = https://github.com/tkob/sml-curl.git
+[submodule "sha2_sml"]
+	path = sha2_sml
+	url = https://github.com/tkob/sha2_sml.git
+	branch = mlton-mlb
