@@ -109,8 +109,8 @@ structure Aws4Client = struct
           date
           (request as {method, path, query, header, messageBody}) =
         let
-          val hostHeader = ("host", host)
-          val xAmzDateHeader = ("x-amz-date", dateToIso8601Basic date)
+          val hostHeader = ("Host", host)
+          val xAmzDateHeader = ("X-Amz-Date", dateToIso8601Basic date)
           val header = HttpHeader.fromList (hostHeader::xAmzDateHeader::HttpHeader.toList header)
           val request = {method=method, path=path, query=query, header=header, messageBody=messageBody}
 
