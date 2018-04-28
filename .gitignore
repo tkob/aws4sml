@@ -1,0 +1,5 @@
+aws-sig-v4-test-suite/
+aws-sig-v4-test-suite.zip
+*.swp
+.cm/
+aws-sig-v4-test

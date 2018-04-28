@@ -1,0 +1,10 @@
+Library
+    structure AwsSigV4Test
+is
+    $/basis.cm
+    httpclient.cm
+    aws4client.cm
+
+    SMLUnit/smlunitlib.cm
+
+    aws-sig-v4-test.sml
