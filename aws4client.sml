@@ -5,7 +5,7 @@ structure Aws4Client = struct
   fun createCanonicalRequest {
           method, path, query, header, messageBody} =
         let
-          val canonicalUri = URI.Path.toString path
+          val canonicalUri = URI.Path.toString (URI.Path.canonicalize path)
           fun parameterToString (name, value) =  name ^ "=" ^ value
           val canonicalQueryString =
             String.concatWith "&" (sort (map parameterToString (URI.Query.toList query)))

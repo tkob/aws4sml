@@ -2,9 +2,11 @@ structure URI :> sig
   type uri
 
   structure Path : sig
-    type path
+    type segment
+    type path = segment list
     val fromString : string -> path
     val toString : path -> string
+    val canonicalize : path -> path
   end
 
   structure Query : sig
@@ -30,10 +32,43 @@ end = struct
   }
 
   structure Path = struct
-    type path = string
+    type segment = string
+    type path = segment list
 
-    fun fromString path = path
-    fun toString path = path
+    fun removeDotSegments input =
+          let
+                (* A and D *)
+            fun aAndD (".."::input) = aAndD input
+              | aAndD ("."::input) = aAndD input
+              | aAndD input = input
+            fun loop [] output = rev output
+                (* B *)
+              | loop ("."::[])    output = loop [] (""::output) (* /. *)
+              | loop ("."::input) output = loop input output    (* /./ *)
+                (* C *)
+              | loop (".."::[])    []          = loop []      []           (* C /.. *)
+              | loop (".."::[])    (""::[])    = loop []      (""::""::[]) (* C /.. *)
+              | loop (".."::[])    (_::output) = loop []      (""::output) (* C /.. *)
+              | loop (".."::input) []          = loop input   []           (* C /../ *)
+              | loop (".."::input) (""::[])    = loop input   (""::[])     (* C /../ *)
+              | loop (".."::input) (_::output) = loop input   output       (* C /../ *)
+                (* E *)
+              | loop (segment::input) output = loop input (segment::output)
+          in
+            loop (aAndD input) []
+          end
+
+    fun canonicalize path = removeDotSegments path
+
+    fun isDelimiter #"/" = true
+      | isDelimiter _ = false
+
+    fun parseIpath s : path =
+          if Substring.isEmpty s then []
+          else map Substring.string (Substring.fields isDelimiter s)
+
+    fun fromString s = parseIpath (Substring.full s)
+    fun toString path = String.concatWith "/" path
   end
 
   structure Query = struct
@@ -92,7 +127,7 @@ end = struct
                    ^ (case port of
                            NONE => ""
                          | SOME port => ":" ^ Int.toString port)
-                   ^ path
+                   ^ Path.toString path
         in
           scheme ^ ":" ^ hierPart
           ^ (if Query.isEmpty query then "" else "?" ^ Query.toString query)
