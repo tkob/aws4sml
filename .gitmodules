@@ -2,3 +2,6 @@
 	path = sha2_sml
 	url = https://github.com/tkob/sha2_sml.git
 	branch = mlton-mlb
+[submodule "aws-sdk-ruby"]
+	path = aws-sdk-ruby
+	url = https://github.com/aws/aws-sdk-ruby.git
