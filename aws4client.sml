@@ -104,14 +104,17 @@ structure Aws4Client = struct
           HMAC.hmacSha256 kSigning (bytes stringToSign)
         end
 
-  fun addSignatureToRequest
+  fun createAuthorizationHeader
           (host, region, service, accessKey, secret)
           date
           (request as {method, path, query, header, messageBody}) =
         let
           val hostHeader = ("Host", host)
           val xAmzDateHeader = ("X-Amz-Date", dateToIso8601Basic date)
-          val header = HttpHeader.fromList (hostHeader::xAmzDateHeader::HttpHeader.toList header)
+          val header = if HttpHeader.contains (header, "Host") then header else
+            HttpHeader.fromList (HttpHeader.toList header @ [hostHeader])
+          val header = if HttpHeader.contains (header, "X-Amz-Date") then header else
+            HttpHeader.fromList (HttpHeader.toList header @ [xAmzDateHeader])
           val request = {method=method, path=path, query=query, header=header, messageBody=messageBody}
 
           val (canonicalRequest, signedHeaders) = createCanonicalRequest request
@@ -126,6 +129,20 @@ structure Aws4Client = struct
             " Credential=" ^ accessKey ^ "/" ^ credentialScope ^
             ", SignedHeaders=" ^ signedHeaders ^
             ", Signature=" ^ ExtWord8Vector.base16lower signature_)
+        in
+          authorizationHeader
+        end
+
+  fun addSignatureToRequest
+          (host, region, service, accessKey, secret)
+          date
+          (request as {method, path, query, header, messageBody}) =
+        let
+          val authorizationHeader =
+            createAuthorizationHeader
+              (host, region, service, accessKey, secret)
+              date
+              request
         in
           { method = method,
             path = path,

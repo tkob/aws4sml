@@ -4,6 +4,8 @@ structure HttpHeader :> sig
   val fromList : (string * string) list -> header
   val toList : header -> (string * string) list
 
+  val contains : header * string -> bool
+
   val fromStream : TextIO.StreamIO.instream -> header * TextIO.StreamIO.instream
 
   val toString : header -> string
@@ -12,6 +14,12 @@ end = struct
 
   fun fromList l = l
   fun toList h = h
+
+  fun contains ([], _) = false
+    | contains ((name', _)::entries, name) =
+        if String.map Char.toLower name = String.map Char.toLower name'
+        then true
+        else contains (entries, name)
 
   fun parseHeaderEntry line =
         let
