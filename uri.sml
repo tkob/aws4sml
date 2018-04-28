@@ -15,6 +15,7 @@ structure URI :> sig
 
     val isEmpty : query -> bool
 
+    val fromString : string -> query option
     val toString : query -> string
   end
 
@@ -42,6 +43,21 @@ end = struct
     fun toList h = h
 
     val isEmpty = List.null
+
+    fun fromString s =
+          let
+            val s = Substring.dropl (fn c => c = #"?") (Substring.full s)
+            val parameters = Substring.tokens (fn c => c = #"&") s
+            fun parseParameter param =
+                  let
+                    val (name, rest) = Substring.splitl (fn c => c <> #"=") param
+                    val value = Substring.dropl (fn c => c = #"=") rest
+                  in
+                    (Substring.string name, Substring.string value)
+                  end
+          in
+            SOME (map parseParameter parameters)
+          end
 
     fun toString query =
           let
