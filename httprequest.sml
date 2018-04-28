@@ -7,6 +7,7 @@ structure HttpRequest :> sig
     messageBody: string
   }
 
+  val fromStream : TextIO.StreamIO.instream -> request option
   val toString : request -> string
 end = struct
   type request = {
@@ -16,6 +17,42 @@ end = struct
     header: HttpHeader.header,
     messageBody: string
   }
+
+  fun parseFirstLine line =
+        let
+          fun neg pred x = not (pred x)
+          val line = Substring.full line
+          val (method, line) = Substring.splitl (neg Char.isSpace) line
+          val line = Substring.dropl Char.isSpace line
+          val (path, line) =
+            Substring.splitl (fn c => not (Char.isSpace c) andalso c <> #"?") line
+          val (query, _) = Substring.splitl (neg Char.isSpace) line
+        in
+          case URI.Query.fromString (Substring.string query) of
+               NONE => NONE
+             | SOME query =>
+                 SOME { method = Substring.string method,
+                        path = URI.Path.fromString (Substring.string path),
+                        query = query }
+        end
+
+  fun fromStream strm =
+        case TextIO.StreamIO.inputLine strm of
+             NONE => NONE
+           | SOME (line, strm') =>
+               case parseFirstLine line of
+                    NONE => NONE
+                  | SOME {method, path, query} =>
+                      let
+                        val (header, strm'') = HttpHeader.fromStream strm'
+                        val (messageBody, _) = TextIO.StreamIO.inputAll strm''
+                      in
+                        SOME { method = method,
+                               path = path,
+                               query = query,
+                               header = header,
+                               messageBody = messageBody }
+                      end
 
   fun toString {method, path, query, header, messageBody} =
         let
