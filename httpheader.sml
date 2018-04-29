@@ -25,12 +25,19 @@ end = struct
   fun lookupAll (header, name) =
         map #2 (List.filter (equalsIgnoringCase name) header)
 
+  infix |>
+  fun (x |> f) = f x
+
+  fun trim s =
+        s |> Substring.dropl (Char.isSpace) |> Substring.dropr (Char.isSpace)
+
   fun parseHeaderEntry line =
         let
-          fun isNewLine c = c = #"\r" orelse c = #"\n"
-          val line = Substring.dropr isNewLine (Substring.full line)
-          val (name, line') = Substring.splitl (fn c => c <> #":") line
-          val value = Substring.dropl (fn c => c = #":" orelse Char.isSpace c) line'
+          val (name, rest) = Substring.splitl (fn c => c <> #":") line
+          val name = trim name
+          val value = rest
+            |> Substring.dropl (fn c => c = #":")
+            |> trim
         in
           (Substring.string name, Substring.string value)
         end
