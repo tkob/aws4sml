@@ -1,10 +1,24 @@
 structure Aws4Client = struct
 
   fun sort (l : string list) : string list  = ListMergeSort.sort (fn (x, y) => x > y) l
+  fun contains ([], x) = false
+    | contains (x'::xs, x) = if x = x' then true else contains (xs, x)
+  fun uniq xs =
+        let
+          fun uniq' ([], acc) = rev acc
+            | uniq' (x::xs, acc) =
+                if contains (acc, x)
+                then uniq' (xs, acc)
+                else uniq' (xs, x::acc)
+        in
+          uniq' (xs, [])
+        end
 
   fun createCanonicalRequest {
           method, path, query, header, messageBody} =
         let
+          infix |>
+          fun (x |> f) = f x
           val canonicalUri = URI.Path.toString (URI.Path.canonicalize path)
           fun parameterToString (name, value) =  name ^ "=" ^ value
           val canonicalQueryString =
@@ -19,10 +33,13 @@ structure Aws4Client = struct
                 in
                   Substring.string s
                 end
-          fun canonicalHeadersEntry (name, value) =
-                lowerCase name ^ ":" ^ trimAll value ^ "\n"
-          val canonicalHeaders = concat (sort (map canonicalHeadersEntry (HttpHeader.toList header)))
-          val signedHeaders = String.concatWith ";" (sort (map (lowerCase o #1) (HttpHeader.toList header)))
+          val signedHeaderNames = uniq (sort (map (lowerCase o #1) (HttpHeader.toList header)))
+          val canonicalHeaders = signedHeaderNames
+            |> map (fn name => (name, HttpHeader.lookupAll (header, name)))
+            |> map (fn (name, values) => (name, String.concatWith "," (map trimAll values)))
+            |> map (fn (name, values) => name ^ ":" ^ values ^ "\n")
+            |> concat
+          val signedHeaders = String.concatWith ";" signedHeaderNames
           val hashedRequestPayload = Sha256.hashString messageBody
           val hexEncodedHashedRequestPayload =
             lowerCase (Sha256.toString hashedRequestPayload)
