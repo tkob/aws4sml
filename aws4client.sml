@@ -24,14 +24,31 @@ structure Aws4Client = struct
           val canonicalQueryString =
             String.concatWith "&" (sort (map parameterToString (URI.Query.toList query)))
           fun lowerCase s = String.map Char.toLower s
-          (* TODO: remove successive spaces *)
           fun trimAll s =
                 let
+                  (* trim leading and trailing spaces first *)
                   val s = Substring.full s
-                  val s = Substring.dropl (Char.isSpace) s
-                  val s = Substring.dropr (Char.isSpace) s
+                    |> Substring.dropl (Char.isSpace)
+                    |> Substring.dropr (Char.isSpace)
+                  (* then remove successive spaces *)
+                  fun previousCharacterIsNotSpace (s, acc) =
+                        case Substring.getc s of
+                             NONE => implode (rev acc)
+                           | SOME (c, s) =>
+                               if Char.isSpace c then
+                                 previousCharacterIsSpace (s, #" "::acc)
+                               else
+                                 previousCharacterIsNotSpace (s, c::acc)
+                  and previousCharacterIsSpace (s, acc) =
+                        case Substring.getc s of
+                             NONE => raise Fail "should never reach here"
+                           | SOME (c, s) =>
+                               if Char.isSpace c then
+                                 previousCharacterIsSpace (s, acc)
+                               else
+                                 previousCharacterIsNotSpace (s, c::acc)
                 in
-                  Substring.string s
+                  previousCharacterIsNotSpace (s, [])
                 end
           val signedHeaderNames = uniq (sort (map (lowerCase o #1) (HttpHeader.toList header)))
           val canonicalHeaders = signedHeaderNames
