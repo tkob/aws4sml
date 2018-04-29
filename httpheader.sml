@@ -48,10 +48,21 @@ end = struct
                 case TextIO.StreamIO.inputLine strm of
                      NONE =>  (rev acc, strm)
                    | SOME (line, strm') =>
-                       if line = "\r\n" orelse line = "\n" then
-                         (rev acc, strm')
-                       else
-                         input (strm', parseHeaderEntry line::acc)
+                       let
+                         fun isNewLine c = c = #"\r" orelse c = #"\n"
+                         val line = Substring.dropr isNewLine (Substring.full line)
+                       in
+                         if Substring.isEmpty line then
+                           (rev acc, strm')
+                         else if Char.isSpace (Substring.sub (line, 0)) then
+                           case acc of
+                                [] =>
+                                  input (strm', parseHeaderEntry line::acc)
+                              | (name, value)::acc' =>
+                                  input (strm', (name, value ^ " " ^ Substring.string (trim line))::acc')
+                         else
+                           input (strm', parseHeaderEntry line::acc)
+                       end
         in
           input (strm, [])
         end
