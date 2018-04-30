@@ -143,14 +143,6 @@ structure Aws4Client = struct
           date
           (request as {method, path, query, header, messageBody}) =
         let
-          val hostHeader = ("Host", host)
-          val xAmzDateHeader = ("X-Amz-Date", dateToIso8601Basic date)
-          val header = if HttpHeader.contains (header, "Host") then header else
-            HttpHeader.fromList (HttpHeader.toList header @ [hostHeader])
-          val header = if HttpHeader.contains (header, "X-Amz-Date") then header else
-            HttpHeader.fromList (HttpHeader.toList header @ [xAmzDateHeader])
-          val request = {method=method, path=path, query=query, header=header, messageBody=messageBody}
-
           val (canonicalRequest, signedHeaders) = createCanonicalRequest request
           val hashedCanonicalRequest =
             String.map Char.toLower (Sha256.toString (Sha256.hashString canonicalRequest))
@@ -172,6 +164,14 @@ structure Aws4Client = struct
           date
           (request as {method, path, query, header, messageBody}) =
         let
+          val hostHeader = ("Host", host)
+          val xAmzDateHeader = ("X-Amz-Date", dateToIso8601Basic date)
+          val header = if HttpHeader.contains (header, "Host") then header else
+            HttpHeader.fromList (HttpHeader.toList header @ [hostHeader])
+          val header = if HttpHeader.contains (header, "X-Amz-Date") then header else
+            HttpHeader.fromList (HttpHeader.toList header @ [xAmzDateHeader])
+          val request = {method=method, path=path, query=query, header=header, messageBody=messageBody}
+
           val authorizationHeader =
             createAuthorizationHeader
               (host, region, service, accessKey, secret)
@@ -181,7 +181,7 @@ structure Aws4Client = struct
           { method = method,
             path = path,
             query = query,
-            header = HttpHeader.fromList (authorizationHeader::HttpHeader.toList header),
+            header = HttpHeader.fromList (HttpHeader.toList header @ [authorizationHeader]),
             messageBody = messageBody }
         end
 
