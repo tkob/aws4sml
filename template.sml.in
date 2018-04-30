@@ -1,5 +1,5 @@
 (* {{ service_full_name }} *)
-structure {{ structure_name }} = struct
+functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
   (* Atomic types *)
   {% for (name, shape) in atomic_types %}
   {%   if shape.type == 'boolean' %}
@@ -98,15 +98,24 @@ structure {{ structure_name }} = struct
   (* Operations *)
   {% for (name, operation) in operations %}
   {%   if operation.http.method == 'POST' %}
-  fun {{ sml_operations[name] }}
-          readWrite
-          (host, region, service, accessKey, secret)
+  fun {{ sml_operations[name] }}'
+          {read, writeAll, connect}
+          credentials
+          region
           {% if 'input' in operation %}
-          (sock, date, request) =
+          request =
           {% else %}
-          (sock, date) =
+          () =
           {% endif %}
         let
+          val (accessKey, secret) = case credentials of
+                                         NONE => raise Fail "unimplemented"
+                                       | SOME credentials => credentials
+          val region = case region of
+                            NONE => raise Fail "unimplemented"
+                          | SOME region => region
+          val host = "{{ endpoint_prefix }}." ^ region ^ ".amazonaws.com"
+          val service = "{{ endpoint_prefix }}"
           {% if 'input' in operation %}
           val jsonRequest = {{ sml_types[operation.input.shape] }}ToJson request
           {% else %}
@@ -127,12 +136,16 @@ structure {{ structure_name }} = struct
             ],
             messageBody = jsonRequest
           }
+          val sock = connect host
         in
           Aws4Client.doRequest
-            readWrite
+            {read = read, writeAll = writeAll}
             (host, region, service, accessKey, secret)
-            (sock, date, httpRequest)
+            (sock, date (), httpRequest)
         end
   {%   endif %}
   {% endfor %}
 end
+
+structure {{ structure_name }} = {{ structure_name }}Fun(
+  val date = fn () => Date.fromTimeUniv (Time.now ()))
