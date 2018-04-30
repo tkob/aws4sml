@@ -1,0 +1,10 @@
+Library
+  structure {{ structure_name }}
+is
+  $/basis.cm
+  $/smlnj-lib.cm
+
+  ../httpclient.cm
+  ../aws4client.cm
+
+  {{ sml_file_name }}

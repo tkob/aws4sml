@@ -101,6 +101,12 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
     sml_stream.dump('generated/' + sml_file_name)
     generated_files.append(sml_file_name)
 
+    cm_template = env.get_template("single.cm.in")
+    cm_stream = cm_template.stream(
+            structure_name = structure_name,
+            sml_file_name = sml_file_name)
+    cm_stream.dump('generated/' + uid + '.cm')
+
 template = env.get_template("aws.cm.in")
 cm = template.render(generated_files = generated_files)
 with open('generated/aws.cm', 'w') as f:
