@@ -80,11 +80,12 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
             trim_blocks=True,
             lstrip_blocks=True)
 
-    template = env.get_template("template.sml.in")
-
     structure_name = "".join([segment.title() for segment in re.split(r'[\.-]', uid)])
 
-    sml = template.render(
+    # render and write to file
+    sml_file_name = uid + '.sml'
+    sml_template = env.get_template("template.sml.in")
+    sml_stream = sml_template.stream(
             service_full_name = service_full_name,
             endpoint_prefix = endpoint_prefix,
             uid = uid,
@@ -97,12 +98,8 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
             atomic_types = atomic_types,
             complex_types = complex_types,
             exceptions = exceptions)
-
-    file_name = uid + '.sml'
-    with open('generated/' + file_name, 'w') as f:
-        f.write(sml)
-
-    generated_files.append(file_name)
+    sml_stream.dump('generated/' + sml_file_name)
+    generated_files.append(sml_file_name)
 
 template = env.get_template("aws.cm.in")
 cm = template.render(generated_files = generated_files)
