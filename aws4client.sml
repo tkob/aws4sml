@@ -196,4 +196,67 @@ structure Aws4Client = struct
        in
           HttpClient.doRequest readWrite (sock, requestWithSignature)
         end
+
+  infix >>=
+  fun (SOME x) >>= k = k x
+    | NONE     >>= k = NONE
+
+  infix or
+  fun (SOME x) or k = SOME x
+    | NONE     or k = k ()
+
+  fun getCredentialsFromEnvironmentVariable () =
+        OS.Process.getEnv "AWS_ACCESS_KEY_ID" >>= (fn accessKey =>
+        OS.Process.getEnv "AWS_SECRET_ACCESS_KEY" >>= (fn secret =>
+        SOME (accessKey, secret)))
+
+  fun getCredentialsFromProfile () =
+        NONE (* TODO *)
+
+  fun getCredentialsFromContainer {read, writeAll, connect} =
+        case OS.Process.getEnv "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" of
+             NONE => NONE
+           | SOME awsContainerCredentialsRelativeUri =>
+               let
+                 val sock = connect "169.254.170.2"
+                 val request = {
+                   method = "GET",
+                   path = URI.Path.fromString awsContainerCredentialsRelativeUri,
+                   query = URI.Query.fromList [],
+                   header = HttpHeader.fromList [],
+                   messageBody = ""
+                 }
+               in
+                 HttpClient.doRequest {read = read, writeAll = writeAll} (sock, request);
+                 NONE (* TODO *)
+               end
+
+  fun getCredentialsFromInstanceProfile {read, writeAll, connect} =
+        NONE (* TODO *)
+
+  exception CredentialsNotFound
+
+  fun scanCredentials readWriteConnect =
+        getCredentialsFromEnvironmentVariable ()           or (fn () =>
+        getCredentialsFromProfile ()                       or (fn () =>
+        getCredentialsFromContainer readWriteConnect       or (fn () =>
+        getCredentialsFromInstanceProfile readWriteConnect or (fn () =>
+        raise CredentialsNotFound))))
+
+  fun getRegionFromEnvironmentVariable () =
+        OS.Process.getEnv "AWS_REGION"
+
+  fun getRegionFromProfile () =
+        NONE (* TODO *)
+
+  fun getRegionFromInstanceProfile {read, writeAll, connect} =
+        NONE (* TODO *)
+
+  exception RegionNotFound
+
+  fun scanRegion readWriteConnect =
+        getRegionFromEnvironmentVariable ()           or (fn () =>
+        getRegionFromProfile ()                       or (fn () =>
+        getRegionFromInstanceProfile readWriteConnect or (fn () =>
+        raise RegionNotFound)))
 end

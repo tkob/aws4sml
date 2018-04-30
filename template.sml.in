@@ -108,12 +108,13 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
           () =
           {% endif %}
         let
-          val (accessKey, secret) = case credentials of
-                                         NONE => raise Fail "unimplemented"
-                                       | SOME credentials => credentials
+          val (accessKey, secret) =
+            case credentials of
+                 NONE => Aws4Client.scanCredentials {read, writeAll, connect}
+               | SOME credentials => credentials
           val region = case region of
-                            NONE => raise Fail "unimplemented"
-                          | SOME region => region
+                 NONE => Aws4Client.scanRegion {read, writeAll, connect}
+               | SOME region => region
           val host = "{{ endpoint_prefix }}." ^ region ^ ".amazonaws.com"
           val service = "{{ endpoint_prefix }}"
           {% if 'input' in operation %}
