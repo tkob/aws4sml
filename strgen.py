@@ -9,9 +9,7 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
     if 'docs-2.json' not in filenames:
         continue
 
-    api2jsonpath = os.path.join(dirpath, 'api-2.json')
-
-    with open(api2jsonpath) as f:
+    with open(os.path.join(dirpath, 'api-2.json')) as f:
         api = json.load(f)
 
     if api['metadata']['protocol'] not in ['query', 'json', 'rest-json']:
