@@ -16,6 +16,11 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
         print('Skipped %s: %s' % (dirpath, api['metadata']['protocol']))
         continue
 
+    print('Procwssing %s' % dirpath)
+
+    operations = sorted(
+            [(name, operation) for name, operation in api['operations'].items()])
+
     atomic_types = sorted(
             [(name, shape) for name, shape in api['shapes'].items()
                 if shape['type'] in [
@@ -55,6 +60,7 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
 
     sml_types = {name: first_lower2(mangle(name)) for name in api['shapes'].keys()}
     sml_constructors = {name: first_upper2(mangle(name)) for name in api['shapes'].keys()}
+    sml_operations = {name: first_lower(mangle(name)) for name in api['operations'].keys()}
 
     for (name, shape) in complex_types + exceptions:
         if shape['type'] != 'structure':
@@ -86,6 +92,8 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
             structure_name = structure_name,
             sml_types = sml_types,
             sml_constructors = sml_constructors,
+            sml_operations = sml_operations,
+            operations = operations,
             atomic_types = atomic_types,
             complex_types = complex_types,
             exceptions = exceptions)

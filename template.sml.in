@@ -94,4 +94,45 @@ structure {{ structure_name }} = struct
     end
   {%   endif %}
   {% endfor %}
+
+  (* Operations *)
+  {% for (name, operation) in operations %}
+  {%   if operation.http.method == 'POST' %}
+  fun {{ sml_operations[name] }}
+          readWrite
+          (host, region, service, accessKey, secret)
+          {% if 'input' in operation %}
+          (sock, date, request) =
+          {% else %}
+          (sock, date) =
+          {% endif %}
+        let
+          {% if 'input' in operation %}
+          val jsonRequest = {{ sml_types[operation.input.shape] }}ToJson request
+          {% else %}
+          val jsonRequest = ""
+          {% endif %}
+          val httpRequest = {
+            method = "{{ operation.http.method }}",
+            path = URI.Path.fromString "{{ operation.http.requestUri }}",
+            query = URI.Query.fromList [],
+            header = HttpHeader.fromList [
+              ("Content-Length", Int.toString (String.size jsonRequest)),
+              {% if target_prefix != None %}
+              ("X-Amz-Target", "{{ target_prefix}}.{{ name }}"),
+              {% else %}
+              ("X-Amz-Target", "{{ name }}"),
+              {% endif %}
+              ("Content-Type", "application/x-amz-json-1.1")
+            ],
+            messageBody = jsonRequest
+          }
+        in
+          Aws4Client.doRequest
+            readWrite
+            (host, region, service, accessKey, secret)
+            (sock, date, httpRequest)
+        end
+  {%   endif %}
+  {% endfor %}
 end
