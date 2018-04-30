@@ -43,7 +43,7 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
 
     def first_upper2(s):
         if s[0].islower():
-            return s + "'"
+            return s[0].upper() + s[1:] + "'"
         else:
             return s[0].upper() + s[1:]
 
