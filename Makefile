@@ -10,3 +10,9 @@ aws-sig-v4-test-suite: aws-sig-v4-test-suite.zip
 aws-sig-v4-test-suite.zip:
 	wget -nc https://docs.aws.amazon.com/ja_jp/general/latest/gr/samples/aws-sig-v4-test-suite.zip
 
+generate: strgen.py
+	mkdir -p generated
+	python strgen.py
+
+clean:
+	rm -rf generated/
