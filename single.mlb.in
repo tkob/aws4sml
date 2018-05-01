@@ -1,0 +1,8 @@
+local
+    $(SML_LIB)/basis/basis.mlb
+
+    ../httpclient.mlb
+    ../aws4client.mlb
+in
+    {{ sml_file_name }}
+end
