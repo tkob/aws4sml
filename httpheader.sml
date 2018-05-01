@@ -7,7 +7,7 @@ structure HttpHeader :> sig
   val contains : header * string -> bool
   val lookupAll : header * string -> string list
 
-  val fromStream : TextIO.StreamIO.instream -> header * TextIO.StreamIO.instream
+  val fromStream : ('strm -> (string * 'strm) option) -> 'strm -> header * 'strm
 
   val toString : header -> string
 end = struct
@@ -42,11 +42,11 @@ end = struct
           (Substring.string name, Substring.string value)
         end
 
-  fun fromStream strm =
+  fun fromStream inputLine strm =
         let
           fun input (strm, acc) =
-                case TextIO.StreamIO.inputLine strm of
-                     NONE =>  (rev acc, strm)
+                case inputLine strm of
+                     NONE => (rev acc, strm)
                    | SOME (line, strm') =>
                        let
                          fun isNewLine c = c = #"\r" orelse c = #"\n"

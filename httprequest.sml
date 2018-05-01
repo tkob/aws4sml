@@ -44,7 +44,8 @@ end = struct
                     NONE => NONE
                   | SOME {method, path, query} =>
                       let
-                        val (header, strm'') = HttpHeader.fromStream strm'
+                        val (header, strm'') =
+                          HttpHeader.fromStream TextIO.StreamIO.inputLine strm'
                         val (messageBody, _) = TextIO.StreamIO.inputAll strm''
                       in
                         SOME { method = method,
