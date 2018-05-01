@@ -1,4 +1,4 @@
-(* {{ service_full_name }} *)
+(* {{ metadata.serviceFullName }} *)
 functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
   (* Atomic types *)
   {% for (name, shape) in atomic_types %}
@@ -115,8 +115,8 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
           val region = case region of
                  NONE => Aws4Client.scanRegion readWriteConnect
                | SOME region => region
-          val host = "{{ endpoint_prefix }}." ^ region ^ ".amazonaws.com"
-          val service = "{{ endpoint_prefix }}"
+          val host = "{{ metadata.endpointPrefix }}." ^ region ^ ".amazonaws.com"
+          val service = "{{ metadata.endpointPrefix }}"
           {% if 'input' in operation %}
           val jsonRequest = {{ sml_types[operation.input.shape] }}ToJson request
           {% else %}
@@ -128,12 +128,12 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
             query = URI.Query.fromList [],
             header = HttpHeader.fromList [
               ("Content-Length", Int.toString (String.size jsonRequest)),
-              {% if target_prefix != None %}
-              ("X-Amz-Target", "{{ target_prefix}}.{{ name }}"),
+              {% if metadata.targetPrefix != None %}
+              ("X-Amz-Target", "{{ metadata.targetPrefix }}.{{ name }}"),
               {% else %}
               ("X-Amz-Target", "{{ name }}"),
               {% endif %}
-              ("Content-Type", "application/x-amz-json-1.1")
+              ("Content-Type", "application/x-amz-json-{{ metadata.jsonVersion }}")
             ],
             messageBody = jsonRequest
           }

@@ -67,13 +67,7 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
             continue
         shape['sml_fields'] = {k: first_lower(mangle(k)) for k in shape['members'].keys()}
 
-    service_full_name = api['metadata']['serviceFullName']
-    endpoint_prefix = api['metadata']['endpointPrefix']
     uid = api['metadata']['uid']
-    if 'targetPrefix' in api['metadata']:
-        target_prefix = api['metadata']['targetPrefix']
-    else:
-        target_prefix = None
 
     env = jinja2.Environment(
             loader=jinja2.FileSystemLoader("."),
@@ -86,10 +80,7 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
     sml_file_name = uid + '.sml'
     sml_template = env.get_template("template.sml.in")
     sml_stream = sml_template.stream(
-            service_full_name = service_full_name,
-            endpoint_prefix = endpoint_prefix,
-            uid = uid,
-            target_prefix = target_prefix,
+            metadata = api['metadata'],
             structure_name = structure_name,
             sml_types = sml_types,
             sml_constructors = sml_constructors,
