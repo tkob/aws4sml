@@ -202,7 +202,7 @@ structure Aws4Client = struct
     | NONE     >>= k = NONE
 
   infix or
-  fun (SOME x) or k = SOME x
+  fun (SOME x) or k = x
     | NONE     or k = k ()
 
   fun getCredentialsFromEnvironmentVariable () =
