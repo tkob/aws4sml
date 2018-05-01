@@ -99,22 +99,16 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
   (*% for (name, operation) in operations %*)
   (*%   if operation.http.method == 'POST' %*)
   fun {{ sml_operations[name] }}'
-          (readWriteConnect as {read, writeAll, connect})
-          credentials
+          (readWrite as {read, writeAll})
+          (credentials as (accessKey, secret))
           region
           (*% if 'input' in operation %*)
-          request =
+          (sock, request)
           (*% else %*)
-          () =
+          sock
           (*% endif %*)
+          =
         let
-          val (accessKey, secret) =
-            case credentials of
-                 NONE => Aws4Client.scanCredentials readWriteConnect
-               | SOME credentials => credentials
-          val region = case region of
-                 NONE => Aws4Client.scanRegion readWriteConnect
-               | SOME region => region
           val host = "{{ metadata.endpointPrefix }}." ^ region ^ ".amazonaws.com"
           val service = "{{ metadata.endpointPrefix }}"
           (*% if 'input' in operation %*)
@@ -137,7 +131,6 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
             ],
             messageBody = jsonRequest
           }
-          val sock = connect host
         in
           Aws4Client.doRequest
             {read = read, writeAll = writeAll}
