@@ -99,7 +99,7 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
   {% for (name, operation) in operations %}
   {%   if operation.http.method == 'POST' %}
   fun {{ sml_operations[name] }}'
-          {read, writeAll, connect}
+          (readWriteConnect as {read, writeAll, connect})
           credentials
           region
           {% if 'input' in operation %}
@@ -110,10 +110,10 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
         let
           val (accessKey, secret) =
             case credentials of
-                 NONE => Aws4Client.scanCredentials {read, writeAll, connect}
+                 NONE => Aws4Client.scanCredentials readWriteConnect
                | SOME credentials => credentials
           val region = case region of
-                 NONE => Aws4Client.scanRegion {read, writeAll, connect}
+                 NONE => Aws4Client.scanRegion readWriteConnect
                | SOME region => region
           val host = "{{ endpoint_prefix }}." ^ region ^ ".amazonaws.com"
           val service = "{{ endpoint_prefix }}"
