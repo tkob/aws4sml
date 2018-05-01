@@ -71,6 +71,8 @@ for dirpath, dirnames, filenames in os.walk('aws-sdk-ruby/apis'):
 
     env = jinja2.Environment(
             loader=jinja2.FileSystemLoader("."),
+            block_start_string='(*%',
+            block_end_string='%*)',
             trim_blocks=True,
             lstrip_blocks=True)
 

@@ -1,112 +1,112 @@
 (* {{ metadata.serviceFullName }} *)
 functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
   (* Atomic types *)
-  {% for (name, shape) in atomic_types %}
-  {%   if shape.type == 'boolean' %}
+  (*% for (name, shape) in atomic_types %*)
+  (*%   if shape.type == 'boolean' %*)
   type {{ sml_types[name] }} = bool
-  {%   elif shape.type == 'integer' %}
+  (*%   elif shape.type == 'integer' %*)
   type {{ sml_types[name] }} = LargeInt.int
-  {%   elif shape.type == 'long' %}
+  (*%   elif shape.type == 'long' %*)
   type {{ sml_types[name] }} = LargeInt.int
-  {%   elif shape.type == 'float' %}
+  (*%   elif shape.type == 'float' %*)
   type {{ sml_types[name] }} = real
-  {%   elif shape.type == 'double' %}
+  (*%   elif shape.type == 'double' %*)
   type {{ sml_types[name] }} = real
-  {%   elif shape.type == 'string' %}
+  (*%   elif shape.type == 'string' %*)
   type {{ sml_types[name] }} = string
-  {%   elif shape.type == 'timestamp' %}
+  (*%   elif shape.type == 'timestamp' %*)
   type {{ sml_types[name] }} = string
-  {%   elif shape.type == 'blob' %}
+  (*%   elif shape.type == 'blob' %*)
   type {{ sml_types[name] }} = string
-  {%   endif %}
-  {% endfor %}
+  (*%   endif %*)
+  (*% endfor %*)
 
   (* Complex types *)
-  {% for (name, shape) in complex_types %}
-  {%   if shape.type == 'list' %}
+  (*% for (name, shape) in complex_types %*)
+  (*%   if shape.type == 'list' %*)
   {{'datatype' if loop.first else 'and'}} {{ sml_types[name] }} = {{ sml_constructors[name] }} of {{ sml_types[shape.member.shape] }} list
-  {%   elif shape.type == 'map' %}
+  (*%   elif shape.type == 'map' %*)
   {{'datatype' if loop.first else 'and'}} {{ sml_types[name] }} = {{ sml_constructors[name] }} of ({{ sml_types[shape.key.shape] }} * {{ sml_types[shape.value.shape] }}) list
-  {%   elif shape.type == 'structure' %}
+  (*%   elif shape.type == 'structure' %*)
   {{'datatype' if loop.first else 'and'}} {{ sml_types[name] }} = {{ sml_constructors[name] }} of {
-    {% for (name, value) in shape.members.items() %}
+    (*% for (name, value) in shape.members.items() %*)
     {{ shape.sml_fields[name] }} : {{ sml_types[value.shape] }}{{ ' option' if name not in shape.required }}{{ ',' if not loop.last}}
-    {% endfor %}
+    (*% endfor %*)
   }
-  {%   endif %}
-  {% endfor %}
+  (*%   endif %*)
+  (*% endfor %*)
 
   (* Exceptions *)
-  {% for (name, shape) in exceptions %}
-  {%   if shape.members|length == 0 %}
+  (*% for (name, shape) in exceptions %*)
+  (*%   if shape.members|length == 0 %*)
   exception {{ name }}
-  {%   else %}
+  (*%   else %*)
   exception {{ name }} of {
-    {% for (name, value) in shape.members.items() %}
+    (*% for (name, value) in shape.members.items() %*)
     {{ shape.sml_fields[name] }} : {{ sml_types[value.shape] }}{{ ',' if not loop.last}}
-    {% endfor %}
+    (*% endfor %*)
   }
-  {%   endif %}
-  {% endfor %}
+  (*%   endif %*)
+  (*% endfor %*)
 
   (* Printers *)
-  {% for (name, shape) in atomic_types %}
-  {%   if shape.type == 'boolean' %}
+  (*% for (name, shape) in atomic_types %*)
+  (*%   if shape.type == 'boolean' %*)
   val {{ sml_types[name] }}ToJson = Bool.toString
-  {%   elif shape.type == 'integer' %}
+  (*%   elif shape.type == 'integer' %*)
   val {{ sml_types[name] }}ToJson = LargeInt.toString
-  {%   elif shape.type == 'long' %}
+  (*%   elif shape.type == 'long' %*)
   val {{ sml_types[name] }}ToJson = LargeInt.toString
-  {%   elif shape.type == 'float' %}
+  (*%   elif shape.type == 'float' %*)
   val {{ sml_types[name] }}ToJson = Real.toString
-  {%   elif shape.type == 'double' %}
+  (*%   elif shape.type == 'double' %*)
   val {{ sml_types[name] }}ToJson = Real.toString
-  {%   elif shape.type == 'string' %}
+  (*%   elif shape.type == 'string' %*)
   fun {{ sml_types[name] }}ToJson s = "\"" ^ String.toString s ^ "\""
-  {%   elif shape.type == 'timestamp' %}
+  (*%   elif shape.type == 'timestamp' %*)
   fun {{ sml_types[name] }}ToJson s = "\"" ^ String.toString s ^ "\""
-  {%   elif shape.type == 'blob' %}
+  (*%   elif shape.type == 'blob' %*)
   fun {{ sml_types[name] }}ToJson s = "\"" ^ String.toString s ^ "\""
-  {%   endif %}
-  {% endfor %}
-  {% for (name, shape) in complex_types %}
-  {%   if shape.type == 'list' %}
+  (*%   endif %*)
+  (*% endfor %*)
+  (*% for (name, shape) in complex_types %*)
+  (*%   if shape.type == 'list' %*)
   {{'fun' if loop.first else 'and'}} {{ sml_types[name] }}ToJson ({{ sml_constructors[name] }} l) =
     "[" ^ String.concatWith ", " (map {{ sml_types[shape.member.shape] }}ToJson l) ^ "]"
-  {%   elif shape.type == 'map' %}
+  (*%   elif shape.type == 'map' %*)
   {{'fun' if loop.first else 'and'}} {{ sml_types[name] }}ToJson ({{ sml_constructors[name] }} m) =
     "{" ^ String.concatWith ", " (map (fn (k, v) => "\"" ^ k ^  "\": " ^ {{ sml_types[shape.value.shape] }}ToJson v) m) ^ "}"
-  {%   elif shape.type == 'structure' %}
+  (*%   elif shape.type == 'structure' %*)
   {{'fun' if loop.first else 'and'}} {{ sml_types[name] }}ToJson ({{ sml_constructors[name] }} { {{ ', '.join(shape.sml_fields.values()) }} }) =
     let
       val entries'' = []
-      {% for field_name, field_shape in shape.members.items()|sort %}
-      {%   if field_name in shape.required %}
+      (*% for field_name, field_shape in shape.members.items()|sort %*)
+      (*%   if field_name in shape.required %*)
       val entries'' = ("\"{{ field_name }}\": " ^ {{ sml_types[field_shape.shape] }}ToJson {{ shape.sml_fields[field_name]}})::entries''
-      {%   else %}
+      (*%   else %*)
       val entries'' = case {{ shape.sml_fields[field_name] }} of
                          NONE => entries''
                        | SOME {{ shape.sml_fields[field_name] }} => ("\"{{ field_name }}\": " ^ {{ sml_types[field_shape.shape] }}ToJson {{ shape.sml_fields[field_name] }})::entries''
-      {%   endif %}
-      {% endfor %}
+      (*%   endif %*)
+      (*% endfor %*)
     in
       "{" ^ String.concatWith ", " (rev entries'') ^ "}"
     end
-  {%   endif %}
-  {% endfor %}
+  (*%   endif %*)
+  (*% endfor %*)
 
   (* Operations *)
-  {% for (name, operation) in operations %}
-  {%   if operation.http.method == 'POST' %}
+  (*% for (name, operation) in operations %*)
+  (*%   if operation.http.method == 'POST' %*)
   fun {{ sml_operations[name] }}'
           (readWriteConnect as {read, writeAll, connect})
           credentials
           region
-          {% if 'input' in operation %}
+          (*% if 'input' in operation %*)
           request =
-          {% else %}
+          (*% else %*)
           () =
-          {% endif %}
+          (*% endif %*)
         let
           val (accessKey, secret) =
             case credentials of
@@ -117,22 +117,22 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
                | SOME region => region
           val host = "{{ metadata.endpointPrefix }}." ^ region ^ ".amazonaws.com"
           val service = "{{ metadata.endpointPrefix }}"
-          {% if 'input' in operation %}
+          (*% if 'input' in operation %*)
           val jsonRequest = {{ sml_types[operation.input.shape] }}ToJson request
-          {% else %}
+          (*% else %*)
           val jsonRequest = ""
-          {% endif %}
+          (*% endif %*)
           val httpRequest = {
             method = "{{ operation.http.method }}",
             path = URI.Path.fromString "{{ operation.http.requestUri }}",
             query = URI.Query.fromList [],
             header = HttpHeader.fromList [
               ("Content-Length", Int.toString (String.size jsonRequest)),
-              {% if metadata.targetPrefix != None %}
+              (*% if metadata.targetPrefix != None %*)
               ("X-Amz-Target", "{{ metadata.targetPrefix }}.{{ name }}"),
-              {% else %}
+              (*% else %*)
               ("X-Amz-Target", "{{ name }}"),
-              {% endif %}
+              (*% endif %*)
               ("Content-Type", "application/x-amz-json-{{ metadata.jsonVersion }}")
             ],
             messageBody = jsonRequest
@@ -144,8 +144,8 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
             (host, region, service, accessKey, secret)
             (sock, date (), httpRequest)
         end
-  {%   endif %}
-  {% endfor %}
+  (*%   endif %*)
+  (*% endfor %*)
 end
 
 structure {{ structure_name }} = {{ structure_name }}Fun(

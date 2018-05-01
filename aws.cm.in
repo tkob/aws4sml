@@ -1,6 +1,9 @@
 Group
 is
   $/basis.cm
-  {% for generated_file in generated_files %}
+  ../httpclient.cm
+  ../aws4client.cm
+
+  (*% for generated_file in generated_files %*)
   {{ generated_file }}
-  {% endfor %}
+  (*% endfor %*)
