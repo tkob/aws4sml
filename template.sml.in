@@ -1,5 +1,11 @@
 (* {{ metadata.serviceFullName }} *)
 functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
+  (*% if 'globalEndpoint' in metadata %*)
+  val host = "{{ metadata.globalEndpoint }}"
+  (*% else %*)
+  fun host region = "{{ metadata.endpointPrefix }}." ^ region ^ ".amazonaws.com"
+  (*% endif %*)
+
   (* Atomic types *)
   (*% for (name, shape) in atomic_types %*)
   (*%   if shape.type == 'boolean' %*)
@@ -109,7 +115,7 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
           (*% endif %*)
           =
         let
-          val host = "{{ metadata.endpointPrefix }}." ^ region ^ ".amazonaws.com"
+          val host = host region
           val service = "{{ metadata.endpointPrefix }}"
           (*% if 'input' in operation %*)
           val jsonRequest = {{ sml_types[operation.input.shape] }}ToJson request
