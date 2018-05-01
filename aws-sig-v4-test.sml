@@ -8,7 +8,10 @@ structure AwsSigV4Test = struct
   fun test reqFilePath =
         let
           val insReq = TextIO.getInstream (TextIO.openIn reqFilePath)
-          val request = valOf (HttpRequest.fromStream insReq)
+          val request = valOf (HttpRequest.fromStream {
+            inputLine=TextIO.StreamIO.inputLine,
+            inputN=TextIO.StreamIO.inputN,
+            inputAll=TextIO.StreamIO.inputAll} insReq)
 
           val authzFilePath =
             OS.Path.joinBaseExt {base = OS.Path.base reqFilePath, ext = SOME "authz"}

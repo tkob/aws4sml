@@ -7,7 +7,12 @@ structure HttpRequest :> sig
     messageBody: string
   }
 
-  val fromStream : TextIO.StreamIO.instream -> request option
+  val fromStream :
+        { inputLine: ('strm -> (string * 'strm) option),
+          inputN: 'strm * int -> string * 'strm,
+          inputAll: 'strm -> string * 'strm }
+        -> 'strm -> request option
+
   val toString : request -> string
 end = struct
   type request = {
@@ -36,8 +41,8 @@ end = struct
                         query = query }
         end
 
-  fun fromStream strm =
-        case TextIO.StreamIO.inputLine strm of
+  fun fromStream {inputLine, inputN, inputAll} strm =
+        case inputLine strm of
              NONE => NONE
            | SOME (line, strm') =>
                case parseFirstLine line of
@@ -45,8 +50,8 @@ end = struct
                   | SOME {method, path, query} =>
                       let
                         val (header, strm'') =
-                          HttpHeader.fromStream TextIO.StreamIO.inputLine strm'
-                        val (messageBody, _) = TextIO.StreamIO.inputAll strm''
+                          HttpHeader.fromStream inputLine strm'
+                        val (messageBody, _) = inputAll strm''
                       in
                         SOME { method = method,
                                path = path,
