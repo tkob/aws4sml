@@ -8,4 +8,5 @@ is
     uri.sml
     httpheader.sml
     httprequest.sml
+    httpresponse.sml
     httpclient.sml
