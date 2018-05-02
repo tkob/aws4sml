@@ -6,6 +6,7 @@ structure HttpHeader :> sig
 
   val contains : header * string -> bool
   val lookupAll : header * string -> string list
+  val lookup : header * string -> string option
 
   val fromStream : ('strm -> (string * 'strm) option) -> 'strm -> header * 'strm
 
@@ -24,6 +25,11 @@ end = struct
 
   fun lookupAll (header, name) =
         map #2 (List.filter (equalsIgnoringCase name) header)
+
+  fun lookup (header, name) =
+        case lookupAll (header, name) of
+             [] => NONE
+           | v::_ => SOME v
 
   infix |>
   fun (x |> f) = f x
