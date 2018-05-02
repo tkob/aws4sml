@@ -1,0 +1,5 @@
+Library
+    structure Stream
+is
+    $/basis.cm
+    stream.sml

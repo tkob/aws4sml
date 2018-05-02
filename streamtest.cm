@@ -1,0 +1,10 @@
+Library
+    structure StreamTest
+is
+    $/basis.cm
+
+    SMLUnit/smlunitlib.cm
+
+    stream.cm
+
+    streamtest.sml
