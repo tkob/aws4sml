@@ -5,6 +5,7 @@ structure Stream :> sig
   val fromFun : (unit -> string) -> instream
 
   val inputN : instream * int -> string * instream
+  val inputLine : instream -> (string * instream) option
   val inputAll : instream -> string * instream
 end = struct
   datatype instream = Nil
@@ -59,6 +60,40 @@ end = struct
                        raise Fail "should never reach here")
         in
           receive (strm, n, [])
+        end
+
+  fun inputLine strm =
+        let
+          fun receive (strm, fragments) = (
+                extend strm;
+                case strm of
+                     Nil =>
+                       let
+                         val line = revcat fragments
+                       in
+                         if String.size line = 0 then NONE
+                         else SOME (line ^ "\n", Nil)
+                       end
+                   | Cons {car, cdr = cdr as (ref (SOME next)), read} =>
+                       let
+                         val (ls, rs) = Substring.splitl (fn c => c <> #"\n") car
+                       in
+                         if Substring.isEmpty rs then
+                           receive (next, ls::fragments)
+                         else
+                           let
+                             val line = revcat (ls::fragments) ^ "\n"
+                             val rs' = Substring.triml 1 rs
+                           in
+                             SOME (line , Cons { car = rs',
+                                                 cdr = cdr,
+                                                 read = read })
+                           end
+                       end
+                   | Cons {cdr = ref NONE, ...} =>
+                       raise Fail "should never reach here")
+        in
+          receive (strm, [])
         end
 
   fun inputAll strm =

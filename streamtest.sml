@@ -49,9 +49,29 @@ structure StreamTest = struct
           ()
         end
 
+  fun testInputLine expectedLines source =
+        let
+          fun lines strm acc =
+                case inputLine strm of
+                     NONE => rev acc
+                   | SOME (line, strm') =>
+                       lines strm' (line::acc)
+          fun s x = fromFun (fromString (source, 2))
+          val assert = Assert.assertEqualList Assert.assertEqualString
+        in
+          fn () => assert expectedLines (lines (s source) [])
+        end
+
   val suite = Test.labelTests [
     ("test inputAll", testInputAll),
-    ("test inputN", testInputN)]
+    ("test inputN", testInputN),
+    ("inputLine \"\"",          testInputLine []                 ""),
+    ("inputLine \"\\n\"",       testInputLine ["\n"]             "\n"),
+    ("inputLine \"abc\"",       testInputLine ["abc\n"]          "abc"),
+    ("inputLine \"abc\\n\"",    testInputLine ["abc\n"]          "abc\n"),
+    ("inputLine \"abc\\ndef\"", testInputLine ["abc\n", "def\n"] "abc\ndef"),
+    ("inputLine \"a\\n\\nb\"",  testInputLine ["a\n", "\n", "b\n"] "a\n\nb")
+  ]
 
   fun run () =
         SMLUnit.TextUITestRunner.runTest {output = TextIO.stdOut} suite
