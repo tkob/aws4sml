@@ -6,6 +6,7 @@ Library
 is
     $/basis.cm
     uri.sml
+    stream.sml
     httpheader.sml
     httprequest.sml
     httpresponse.sml
