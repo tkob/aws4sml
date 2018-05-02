@@ -10,7 +10,7 @@ structure HttpResponse :> sig
         { inputLine: ('strm -> (string * 'strm) option),
           inputN: 'strm * int -> string * 'strm,
           inputAll: 'strm -> string * 'strm }
-        -> 'strm -> response option
+        -> 'strm -> (response * 'strm) option
 
   val toString : response -> string
 end = struct
@@ -43,12 +43,31 @@ end = struct
                   | SOME {status, responsePhrase} =>
                       let
                         val (header, strm'') = HttpHeader.fromStream inputLine strm'
-                        val (messageBody, _) = inputAll strm''
                       in
-                        SOME { status = status,
-                               responsePhrase = responsePhrase,
-                               header = header,
-                               messageBody = messageBody }
+                        case HttpHeader.lookup (header, "Content-Length") of
+                             NONE =>
+                               let
+                                 val (messageBody, strm''') = inputAll strm''
+                                 val response = { status = status,
+                                                  responsePhrase = responsePhrase,
+                                                  header = header,
+                                                  messageBody = messageBody }
+                               in
+                                 SOME (response, strm''')
+                               end
+                           | SOME length =>
+                               case Int.fromString length of
+                                    NONE => NONE
+                                  | SOME length =>
+                                      let
+                                        val (messageBody, strm''') = inputN (strm'', length)
+                                        val response = { status = status,
+                                                         responsePhrase = responsePhrase,
+                                                         header = header,
+                                                         messageBody = messageBody }
+                                      in
+                                        SOME (response, strm''')
+                                      end
                       end
 
   fun toString {status, responsePhrase, header, messageBody} =
