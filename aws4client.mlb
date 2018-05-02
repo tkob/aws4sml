@@ -7,6 +7,8 @@ local
 
     httpclient.mlb
 
+    extdate.mlb
+
     $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
     $(SML_LIB)/smlnj-lib/JSON/json-lib.mlb
 in

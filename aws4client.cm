@@ -10,5 +10,6 @@ is
     extword8vector.cm
     hmac.cm
     httpclient.cm
+    extdate.cm
 
     aws4client.sml
