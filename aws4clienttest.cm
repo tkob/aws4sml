@@ -1,0 +1,10 @@
+Library
+    structure Aws4ClientTest
+is
+    $/basis.cm
+    httpclient.cm
+    aws4client.cm
+
+    SMLUnit/smlunitlib.cm
+
+    aws4clienttest.sml

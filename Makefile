@@ -1,5 +1,9 @@
-check: aws-sig-v4-test aws-sig-v4-test-suite
+check: aws-sig-v4-test aws-sig-v4-test-suite aws4clienttest
 	./aws-sig-v4-test
+	./aws4clienttest
+
+aws4clienttest: aws4clienttest.mlb aws4clienttest.sml aws4client.mlb aws4client.sml aws4sml.mlb extword8vector.mlb extword8vector.sml hmac.mlb hmac.sml httpclient.mlb httpclient.sml httpheader.sml httprequest.sml uri.sml
+	mlton aws4clienttest.mlb
 
 aws-sig-v4-test: aws-sig-v4-test.mlb aws-sig-v4-test.sml aws4client.mlb aws4client.sml aws4sml.mlb extword8vector.mlb extword8vector.sml hmac.mlb hmac.sml httpclient.mlb httpclient.sml httpheader.sml httprequest.sml uri.sml 
 	mlton aws-sig-v4-test.mlb

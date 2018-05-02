@@ -1,8 +1,10 @@
 Library
+    functor Aws4ClientFun
     structure Aws4Client
 is
     $/basis.cm
     $/smlnj-lib.cm
+    $/json-lib.cm
 
     sha2_sml/libsha2sml.cm
     extword8vector.cm

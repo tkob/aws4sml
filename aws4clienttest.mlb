@@ -1,0 +1,9 @@
+local
+    $(SML_LIB)/basis/basis.mlb
+    httpclient.mlb
+    aws4client.mlb
+
+    SMLUnit/smlunitlib.mlb
+in
+    aws4clienttest.sml
+end
