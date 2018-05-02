@@ -275,29 +275,41 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
 
   exception CredentialsNotFound
 
-  fun scanCredentials (getEnv, rw) credentials =
+  fun scanCredentials' (getEnv, rw) credentials =
         getCredentialsFromEnvironmentVariable' getEnv               or (fn () =>
         getCredentialsFromProfile' ()                               or (fn () =>
         getCredentialsFromContainer' (getEnv, rw) credentials       or (fn () =>
         getCredentialsFromInstanceProfile' (getEnv, rw) credentials or (fn () =>
         raise CredentialsNotFound))))
 
+  fun scanCredentials credentials =
+        scanCredentials' (OS.Process.getEnv, defaultRw) credentials
+
+  fun getRegionFromEnvironmentVariable' getEnv = getEnv "AWS_REGION"
+
   fun getRegionFromEnvironmentVariable () =
-        OS.Process.getEnv "AWS_REGION"
+        getRegionFromEnvironmentVariable' OS.Process.getEnv
 
-  fun getRegionFromProfile () =
+  fun getRegionFromProfile' getEnv =
         NONE (* TODO *)
 
-  fun getRegionFromInstanceProfile {read, writeAll, connect} =
+  fun getRegionFromProfile () = getRegionFromProfile' OS.Process.getEnv
+
+  fun getRegionFromInstanceProfile' (getEnv, rw) =
         NONE (* TODO *)
+
+  fun getRegionFromInstanceProfile () =
+        getRegionFromInstanceProfile' (OS.Process.getEnv, defaultRw)
 
   exception RegionNotFound
 
-  fun scanRegion readWriteConnect =
-        getRegionFromEnvironmentVariable ()           or (fn () =>
-        getRegionFromProfile ()                       or (fn () =>
-        getRegionFromInstanceProfile readWriteConnect or (fn () =>
+  fun scanRegion' (getEnv, rw) =
+        getRegionFromEnvironmentVariable' getEnv   or (fn () =>
+        getRegionFromProfile' getEnv               or (fn () =>
+        getRegionFromInstanceProfile' (getEnv, rw) or (fn () =>
         raise RegionNotFound)))
+
+  fun scanRegion () = scanRegion' (OS.Process.getEnv, defaultRw)
 end
 
 structure Aws4Client = Aws4ClientFun(val date = fn () => Date.fromTimeUniv (Time.now ()))
