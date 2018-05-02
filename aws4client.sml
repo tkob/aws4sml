@@ -250,13 +250,16 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
                         val response = doRequest (sock, request)
                         val credentialsJson =
                           JSONParser.parse (TextIO.openString (#messageBody response))
+                        val parseDate =
+                          ExtDate.W3cDtf.fromString ExtDate.W3cDtf.date
                       in
                         lookupString (credentialsJson, "AccessKeyId") >>= (fn accessKey =>
                         lookupString (credentialsJson, "SecretAccessKey") >>= (fn secret =>
                         lookupString (credentialsJson, "Expiration") >>= (fn expiration =>
+                        parseDate expiration >>= (fn expiration =>
                         SOME { accessKey = accessKey,
                                secret = secret,
-                               expiration = SOME (date ()) }))) (* TODO *)
+                               expiration = SOME expiration }))))
                         before (close sock)
                       end
 
