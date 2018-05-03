@@ -217,7 +217,9 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
           (*% endif %*)
           =
         let
+          (*% if 'globalEndpoint' not in metadata %*)
           val host = host region
+          (*% endif %*)
           val service = "{{ metadata.endpointPrefix }}"
           (*% if 'input' in operation %*)
           val jsonRequest = {{ sml_types[operation.input.shape] }}ToJson request
