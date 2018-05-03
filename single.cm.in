@@ -2,7 +2,7 @@ Library
   structure {{ structure_name }}
 is
   $/basis.cm
-  $/smlnj-lib.cm
+  $/json-lib.cm
 
   ../httpclient.cm
   ../aws4client.cm

@@ -1,6 +1,7 @@
 Group
 is
   $/basis.cm
+  $/json-lib.cm
   ../httpclient.cm
   ../aws4client.cm
 
