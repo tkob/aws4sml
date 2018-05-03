@@ -208,7 +208,15 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
     getCredentialsFromEnvironmentVariable' OS.Process.getEnv
 
   fun getCredentialsFromProfile' getEnv =
-        NONE (* TODO *)
+        case getEnv "HOME" of
+             NONE => NONE
+           | SOME home =>
+               IniFile.fromFile (home ^ "/.aws/credentials") >>= (fn iniFile =>
+               IniFile.lookup iniFile "default" "aws_access_key_id" >>= (fn accessKey =>
+               IniFile.lookup iniFile "default" "aws_secret_access_key" >>= (fn secret=>
+               SOME { accessKey = accessKey,
+                      secret = secret,
+                      expiration = NONE })))
 
   fun getCredentialsFromProfile () =
         getCredentialsFromProfile' OS.Process.getEnv
@@ -277,7 +285,7 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
 
   fun scanCredentials' (getEnv, rw) credentials =
         getCredentialsFromEnvironmentVariable' getEnv               or (fn () =>
-        getCredentialsFromProfile' ()                               or (fn () =>
+        getCredentialsFromProfile' getEnv                           or (fn () =>
         getCredentialsFromContainer' (getEnv, rw) credentials       or (fn () =>
         getCredentialsFromInstanceProfile' (getEnv, rw) credentials or (fn () =>
         raise CredentialsNotFound))))
@@ -291,7 +299,11 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
         getRegionFromEnvironmentVariable' OS.Process.getEnv
 
   fun getRegionFromProfile' getEnv =
-        NONE (* TODO *)
+        case getEnv "HOME" of
+             NONE => NONE
+           | SOME home =>
+               IniFile.fromFile (home ^ "/.aws/config") >>= (fn iniFile =>
+               IniFile.lookup iniFile "default" "region")
 
   fun getRegionFromProfile () = getRegionFromProfile' OS.Process.getEnv
 

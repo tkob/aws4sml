@@ -11,5 +11,6 @@ is
     hmac.cm
     httpclient.cm
     extdate.cm
+    inifile.sml
 
     aws4client.sml
