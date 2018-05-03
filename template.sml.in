@@ -241,11 +241,27 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
             ],
             messageBody = jsonRequest
           }
+          val httpResponse =
+            Aws4Client.doRequest
+              {read = read, writeAll = writeAll}
+              (host, region, service, accessKey, secret)
+              (sock, date (), httpRequest)
+          (*% if 'output' in operation %*)
+          val jsonResponse =
+            JSONParser.parse (TextIO.openString (#messageBody httpResponse))
+            handle _ => JSON.OBJECT []
+          (*% endif %*)
         in
-          Aws4Client.doRequest
-            {read = read, writeAll = writeAll}
-            (host, region, service, accessKey, secret)
-            (sock, date (), httpRequest)
+          if String.sub (#status httpResponse, 0) = #"2" then
+            (*% if 'output' in operation %*)
+            case {{ sml_types[operation.output.shape] }}FromJson jsonResponse of
+                 NONE => raise Fail "invalid aws response"
+               | SOME response => response
+            (*% else %*)
+            ()
+            (*% endif %*)
+          else
+            raise Fail "error status"
         end
   (*%   endif %*)
   (*% endfor %*)
