@@ -14,5 +14,6 @@ local
     $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
     $(SML_LIB)/smlnj-lib/JSON/json-lib.mlb
 in
+    awscredentials.sml
     aws4client.sml
 end

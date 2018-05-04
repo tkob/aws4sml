@@ -20,7 +20,7 @@ structure Aws4ClientTest = struct
     connect = fn _ => TextIO.openString s,
     close = fn _ => () }
 
-  fun assertEqualCredentials (expected : credentials) (actual : credentials) = (
+  fun assertEqualCredentials (expected : AwsCredentials.credentials) (actual : AwsCredentials.credentials) = (
         Assert.assertEqualString (#accessKey expected) (#accessKey actual);
         Assert.assertEqualString (#secret expected) (#secret actual);
         Assert.assertEqualOption Assert.AssertDate.assertEqualDate (#expiration expected) (#expiration actual))
@@ -37,7 +37,7 @@ structure Aws4ClientTest = struct
             "\"SecretAccessKey\": \"SECRET_ACCESS_KEY\",\n" ^
             "\"Token\": \"SECURITY_TOKEN_STRING\"\n" ^
             "}")
-          val actual = getCredentialsFromContainer' (getEnv, rw) NONE
+          val actual = AwsCredentials.getCredentialsFromContainer' (getEnv, rw) NONE
           val expected = SOME { accessKey="ACCESS_KEY_ID",
                                 secret="SECRET_ACCESS_KEY",
                                 expiration=SOME mockDate }
