@@ -39,12 +39,11 @@ end = struct
 
   fun inputN (strm, n) =
         let
-          fun receive (strm, n, fragments) = (
-                extend strm;
+          fun receive (strm, n, fragments) =
                 case strm of
                      Nil => (revcat fragments, Nil)
-                   | Cons {car, cdr = cdr as (ref (SOME next)), read} =>
-                       if Substring.size car > n then
+                   | Cons {car, cdr, read} =>
+                       if Substring.size car >= n then
                          let
                            val (ss, ss') = Substring.splitAt (car, n)
                          in
@@ -52,20 +51,20 @@ end = struct
                                                            cdr = cdr,
                                                            read = read })
                          end
-                       else if Substring.size car = n then
-                           (revcat (car::fragments), next)
-                       else
-                         receive (next, n - Substring.size car, car::fragments)
-                   | Cons {cdr = ref NONE, ...} =>
-                       raise Fail "should never reach here")
+                       else (
+                         extend strm;
+                         case cdr of
+                              ref (SOME next) =>
+                                receive (next, n - Substring.size car, car::fragments)
+                            | ref NONE =>
+                                raise Fail "should never reach here")
         in
           receive (strm, n, [])
         end
 
   fun inputLine strm =
         let
-          fun receive (strm, fragments) = (
-                extend strm;
+          fun receive (strm, fragments) =
                 case strm of
                      Nil =>
                        let
@@ -74,12 +73,17 @@ end = struct
                          if String.size line = 0 then NONE
                          else SOME (line ^ "\n", Nil)
                        end
-                   | Cons {car, cdr = cdr as (ref (SOME next)), read} =>
+                   | Cons {car, cdr, read} =>
                        let
                          val (ls, rs) = Substring.splitl (fn c => c <> #"\n") car
                        in
-                         if Substring.isEmpty rs then
-                           receive (next, ls::fragments)
+                         if Substring.isEmpty rs then (
+                           extend strm;
+                           case cdr of
+                                ref (SOME next) =>
+                                  receive (next, ls::fragments)
+                              | ref NONE =>
+                                  raise Fail "should never reach here")
                          else
                            let
                              val line = revcat (ls::fragments) ^ "\n"
@@ -90,8 +94,6 @@ end = struct
                                                  read = read })
                            end
                        end
-                   | Cons {cdr = ref NONE, ...} =>
-                       raise Fail "should never reach here")
         in
           receive (strm, [])
         end
