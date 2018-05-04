@@ -71,7 +71,7 @@ end = struct
                       end
 
   fun toString {status, responsePhrase, header, messageBody} =
-        "HTTP1/1 " ^ status ^ " " ^ responsePhrase ^ "\r\n" ^
+        "HTTP/1.1 " ^ status ^ " " ^ responsePhrase ^ "\r\n" ^
         HttpHeader.toString header ^
         "\r\n" ^
         messageBody
