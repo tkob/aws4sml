@@ -208,8 +208,8 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
   (*%   if operation.http.method == 'POST' %*)
   fun {{ sml_operations[name] }}'
           (readWrite as {read, writeAll})
-          (credentials as (accessKey, secret))
           region
+          (credentials as (accessKey, secret))
           (*% if 'input' in operation %*)
           (sock, request)
           (*% else %*)
