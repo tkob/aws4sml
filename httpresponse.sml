@@ -45,29 +45,32 @@ end = struct
                         val (header, strm'') = HttpHeader.fromStream inputLine strm'
                       in
                         case HttpHeader.lookup (header, "Content-Length") of
-                             NONE =>
-                               let
-                                 val (messageBody, strm''') = inputAll strm''
-                                 val response = { status = status,
-                                                  responsePhrase = responsePhrase,
-                                                  header = header,
-                                                  messageBody = messageBody }
-                               in
-                                 SOME (response, strm''')
-                               end
-                           | SOME length =>
-                               case Int.fromString length of
-                                    NONE => NONE
-                                  | SOME length =>
-                                      let
-                                        val (messageBody, strm''') = inputN (strm'', length)
-                                        val response = { status = status,
-                                                         responsePhrase = responsePhrase,
-                                                         header = header,
-                                                         messageBody = messageBody }
-                                      in
-                                        SOME (response, strm''')
-                                      end
+                             SOME length =>
+                               (case Int.fromString length of
+                                     NONE => NONE
+                                   | SOME length =>
+                                       let
+                                         val (messageBody, strm''') = inputN (strm'', length)
+                                         val response = { status = status,
+                                                          responsePhrase = responsePhrase,
+                                                          header = header,
+                                                          messageBody = messageBody }
+                                       in
+                                         SOME (response, strm''')
+                                       end)
+                           | NONE =>
+                               (case HttpHeader.lookup (header, "Transfer-Encoding") of
+                                     SOME _ => raise Fail "Transfer-Encoding not implemented yet"
+                                   | NONE =>
+                                       let
+                                         val (messageBody, strm''') = inputAll strm''
+                                         val response = { status = status,
+                                                          responsePhrase = responsePhrase,
+                                                          header = header,
+                                                          messageBody = messageBody }
+                                       in
+                                         SOME (response, strm''')
+                                       end)
                       end
 
   fun toString {status, responsePhrase, header, messageBody} =
