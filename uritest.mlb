@@ -1,0 +1,7 @@
+local
+    $(SML_LIB)/basis/basis.mlb
+    SMLUnit/smlunitlib.mlb
+    uri.mlb
+in
+    uritest.sml
+end

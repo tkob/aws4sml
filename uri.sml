@@ -1,10 +1,11 @@
+(* RFC 3986 *)
 structure URI :> sig
   type uri
 
   structure Path : sig
     type segment
     type path = segment list
-    val fromString : string -> path
+    val fromString : string -> path option
     val toString : path -> string
     val canonicalize : path -> path
   end
@@ -25,6 +26,57 @@ structure URI :> sig
   val toString : uri -> string
 
 end = struct
+    fun isUnreserved #"-" = true
+      | isUnreserved #"." = true
+      | isUnreserved #"_" = true
+      | isUnreserved #"~" = true
+      | isUnreserved c = Char.isAlpha c orelse Char.isDigit c
+
+  fun percentEncode s =
+        let
+          fun encodeChar c =
+                if isUnreserved c then
+                  String.str c
+                else
+                  "%" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord c))
+        in
+          String.concat (map encodeChar (explode s))
+        end
+  fun percentDecode s =
+        let
+          val s = Substring.full s
+          fun isHex c =
+            Char.isDigit c
+            orelse (Char.ord c >= Char.ord #"A" andalso Char.ord c <= Char.ord #"F")
+            orelse (Char.ord c >= Char.ord #"a" andalso Char.ord c <= Char.ord #"f")
+          fun default (s, cs) =
+                case Substring.getc s of
+                     NONE => SOME (implode (rev cs))
+                   | SOME (c, s') =>
+                       if c = #"%" then
+                         hexh (s', cs)
+                       else
+                         default (s', c::cs)
+          and hexh (s, cs) =
+                case Substring.getc s of
+                     NONE => NONE
+                   | SOME (c, s') =>
+                       if isHex c then
+                         hexl (s', c, cs)
+                       else
+                         NONE
+          and hexl (s, hh, cs) =
+                case Substring.getc s of
+                     NONE => NONE
+                   | SOME (c, s') =>
+                       if isHex c then
+                         default (s', valOf (Char.fromCString (implode [#"\\", #"x", hh, c]))::cs)
+                       else
+                         NONE
+        in
+          default (s, [])
+        end
+
   type authority = {
     userInfo : string option,
     host : string,
@@ -60,15 +112,49 @@ end = struct
 
     fun canonicalize path = removeDotSegments path
 
+    fun isGenDelims #":" = true
+      | isGenDelims #"/" = true
+      | isGenDelims #"?" = true
+      | isGenDelims #"#" = true
+      | isGenDelims #"[" = true
+      | isGenDelims #"]" = true
+      | isGenDelims #"@" = true
+      | isGenDelims _ = false
+
+    fun isSubDelims #"!" = true
+      | isSubDelims #"$" = true
+      | isSubDelims #"&" = true
+      | isSubDelims #"'" = true
+      | isSubDelims #"(" = true
+      | isSubDelims #")" = true
+      | isSubDelims #"*" = true
+      | isSubDelims #"+" = true
+      | isSubDelims #"," = true
+      | isSubDelims #";" = true
+      | isSubDelims #"=" = true
+      | isSubDelims _ = false
+
+    fun isReserved c = isGenDelims c orelse isSubDelims c
+
     fun isDelimiter #"/" = true
       | isDelimiter _ = false
 
-    fun parseIpath s : path =
-          if Substring.isEmpty s then []
-          else map Substring.string (Substring.fields isDelimiter s)
+    fun parseIpath s =
+          if Substring.isEmpty s then SOME []
+          else
+            let
+              val fields = map Substring.string (Substring.fields isDelimiter s)
+              fun decode (field, NONE) = NONE
+                | decode (field, SOME segments) =
+                    case percentDecode field of
+                         NONE => NONE
+                       | SOME segment => SOME (segment::segments)
+            in
+              List.foldr decode (SOME []) fields
+            end
 
     fun fromString s = parseIpath (Substring.full s)
-    fun toString path = String.concatWith "/" path
+    fun toString path = String.concatWith "/" (map percentEncode path)
   end
 
   structure Query = struct

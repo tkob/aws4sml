@@ -1,0 +1,10 @@
+Library
+    structure UriTest
+is
+    $/basis.cm
+
+    SMLUnit/smlunitlib.cm
+
+    uri.cm
+
+    uritest.sml

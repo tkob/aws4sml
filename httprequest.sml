@@ -41,7 +41,7 @@ end = struct
                NONE => NONE
              | SOME query =>
                  SOME { method = Substring.string method,
-                        path = URI.Path.fromString (Substring.string path),
+                        path = valOf (URI.Path.fromString (Substring.string path)),
                         query = query }
         end
 
