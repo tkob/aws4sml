@@ -2,10 +2,6 @@ structure ExtDate = struct
 
   open Date
 
-  fun leftPad c width s =
-        if String.size s >= width then s
-        else leftPad c width (String.str c ^ s)
-
   fun digitsToMonth "01" = SOME Date.Jan
     | digitsToMonth "02" = SOME Date.Feb
     | digitsToMonth "03" = SOME Date.Mar
@@ -36,12 +32,12 @@ structure ExtDate = struct
   fun toIso8601Basic date =
         let
           val date = Date.fromTimeUniv (Date.toTime date)
-          val year = leftPad #"0" 4 (Int.toString (Date.year date))
+          val year = StringCvt.padLeft #"0" 4 (Int.toString (Date.year date))
           val month = monthToDigits (Date.month date)
-          val day = leftPad #"0" 2 (Int.toString (Date.day date))
-          val hour = leftPad #"0" 2 (Int.toString (Date.hour date))
-          val minute = leftPad #"0" 2 (Int.toString (Date.minute date))
-          val second = leftPad #"0" 2 (Int.toString (Date.second date))
+          val day = StringCvt.padLeft #"0" 2 (Int.toString (Date.day date))
+          val hour = StringCvt.padLeft #"0" 2 (Int.toString (Date.hour date))
+          val minute = StringCvt.padLeft #"0" 2 (Int.toString (Date.minute date))
+          val second = StringCvt.padLeft #"0" 2 (Int.toString (Date.second date))
         in
           String.concat [year, month, day, "T", hour, minute, second, "Z"]
         end
@@ -49,9 +45,9 @@ structure ExtDate = struct
   fun toYYYYmmdd date =
         let
           val date = Date.fromTimeUniv (Date.toTime date)
-          val year = leftPad #"0" 4 (Int.toString (Date.year date))
+          val year = StringCvt.padLeft #"0" 4 (Int.toString (Date.year date))
           val month = monthToDigits (Date.month date)
-          val day = leftPad #"0" 2 (Int.toString (Date.day date))
+          val day = StringCvt.padLeft #"0" 2 (Int.toString (Date.day date))
         in
           String.concat [year, month, day]
         end

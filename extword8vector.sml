@@ -47,11 +47,7 @@ end = struct
 
   fun bytes (len, init) = Word8Vector.tabulate (len, fn _ => init)
 
-  fun leftPad c width s =
-        if String.size s >= width then s
-        else leftPad c width (String.^ (String.str c, s))
-
-  fun base16 bytes = String.concat (List.map (leftPad #"0" 2 o Word8.toString) (toList bytes))
+  fun base16 bytes = String.concat (List.map (StringCvt.padLeft #"0" 2 o Word8.toString) (toList bytes))
   fun base16lower bytes = String.map Char.toLower (base16 bytes)
 
 end
