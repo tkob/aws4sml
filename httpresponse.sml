@@ -21,6 +21,10 @@ end = struct
     messageBody: string
   }
 
+  infix >>=
+  fun (SOME x) >>= k = k x
+    | NONE     >>= k = NONE
+
   fun parseFirstLine line =
         let
           fun neg pred x = not (pred x)
@@ -35,43 +39,36 @@ end = struct
         end
 
   fun fromStream {inputLine, inputN, inputAll} strm =
-        case inputLine strm of
-             NONE => NONE
-           | SOME (line, strm') =>
-               case parseFirstLine line of
-                    NONE => NONE
-                  | SOME {status, responsePhrase} =>
-                      let
-                        val (header, strm'') = HttpHeader.fromStream inputLine strm'
-                      in
-                        case HttpHeader.lookup (header, "Content-Length") of
-                             SOME length =>
-                               (case Int.fromString length of
-                                     NONE => NONE
-                                   | SOME length =>
-                                       let
-                                         val (messageBody, strm''') = inputN (strm'', length)
-                                         val response = { status = status,
-                                                          responsePhrase = responsePhrase,
-                                                          header = header,
-                                                          messageBody = messageBody }
-                                       in
-                                         SOME (response, strm''')
-                                       end)
-                           | NONE =>
-                               (case HttpHeader.lookup (header, "Transfer-Encoding") of
-                                     SOME _ => raise Fail "Transfer-Encoding not implemented yet"
-                                   | NONE =>
-                                       let
-                                         val (messageBody, strm''') = inputAll strm''
-                                         val response = { status = status,
-                                                          responsePhrase = responsePhrase,
-                                                          header = header,
-                                                          messageBody = messageBody }
-                                       in
-                                         SOME (response, strm''')
-                                       end)
-                      end
+        inputLine strm                        >>= (fn (line, strm') =>
+        parseFirstLine line                   >>= (fn {status, responsePhrase} =>
+        HttpHeader.fromStream inputLine strm' >>= (fn (header, strm'') =>
+        case HttpHeader.lookup (header, "Content-Length") of
+             SOME length =>
+               (case Int.fromString length of
+                     NONE => NONE
+                   | SOME length =>
+                       let
+                         val (messageBody, strm''') = inputN (strm'', length)
+                         val response = { status = status,
+                                          responsePhrase = responsePhrase,
+                                          header = header,
+                                          messageBody = messageBody }
+                       in
+                         SOME (response, strm''')
+                       end)
+           | NONE =>
+               (case HttpHeader.lookup (header, "Transfer-Encoding") of
+                     SOME _ => raise Fail "Transfer-Encoding not implemented yet"
+                   | NONE =>
+                       let
+                         val (messageBody, strm''') = inputAll strm''
+                         val response = { status = status,
+                                          responsePhrase = responsePhrase,
+                                          header = header,
+                                          messageBody = messageBody }
+                       in
+                         SOME (response, strm''')
+                       end))))
 
   fun toString {status, responsePhrase, header, messageBody} =
         "HTTP/1.1 " ^ status ^ " " ^ responsePhrase ^ "\r\n" ^

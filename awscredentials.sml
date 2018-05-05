@@ -93,7 +93,7 @@ structure AwsCredentials = struct
                           method = "GET",
                           path = URI.Path.fromString awsContainerCredentialsRelativeUri,
                           query = URI.Query.fromList [],
-                          header = HttpHeader.fromList [],
+                          header = valOf (HttpHeader.fromList []),
                           messageBody = ""
                         }
                         val doRequest =

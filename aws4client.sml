@@ -123,12 +123,19 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
           date
           (request as {method, path, query, header, messageBody}) =
         let
+          fun appendHeaderField (header, field as (name, value)) =
+                case HttpHeader.fromList (HttpHeader.toList header @ [field]) of
+                     NONE =>
+                       raise Fail ("invalid field: " ^ name ^ ":" ^ value)
+                   | SOME header => header
           val hostHeader = ("Host", host)
           val xAmzDateHeader = ("X-Amz-Date", ExtDate.toIso8601Basic date)
-          val header = if HttpHeader.contains (header, "Host") then header else
-            HttpHeader.fromList (HttpHeader.toList header @ [hostHeader])
-          val header = if HttpHeader.contains (header, "X-Amz-Date") then header else
-            HttpHeader.fromList (HttpHeader.toList header @ [xAmzDateHeader])
+          val header =
+            if HttpHeader.contains (header, "Host") then header
+            else appendHeaderField (header, hostHeader)
+          val header =
+            if HttpHeader.contains (header, "X-Amz-Date") then header
+            else appendHeaderField (header, xAmzDateHeader)
           val request = {method=method, path=path, query=query, header=header, messageBody=messageBody}
 
           val authorizationHeader =
@@ -140,7 +147,7 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
           { method = method,
             path = path,
             query = query,
-            header = HttpHeader.fromList (HttpHeader.toList header @ [authorizationHeader]),
+            header = appendHeaderField (header, authorizationHeader),
             messageBody = messageBody }
         end
 

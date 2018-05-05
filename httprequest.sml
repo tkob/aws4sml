@@ -23,6 +23,10 @@ end = struct
     messageBody: string
   }
 
+  infix >>=
+  fun (SOME x) >>= k = k x
+    | NONE     >>= k = NONE
+
   fun parseFirstLine line =
         let
           fun neg pred x = not (pred x)
@@ -42,23 +46,18 @@ end = struct
         end
 
   fun fromStream {inputLine, inputN, inputAll} strm =
-        case inputLine strm of
-             NONE => NONE
-           | SOME (line, strm') =>
-               case parseFirstLine line of
-                    NONE => NONE
-                  | SOME {method, path, query} =>
-                      let
-                        val (header, strm'') =
-                          HttpHeader.fromStream inputLine strm'
-                        val (messageBody, _) = inputAll strm''
-                      in
-                        SOME { method = method,
-                               path = path,
-                               query = query,
-                               header = header,
-                               messageBody = messageBody }
-                      end
+        inputLine strm                        >>= (fn (line, strm') =>
+        parseFirstLine line                   >>= (fn {method, path, query} =>
+        HttpHeader.fromStream inputLine strm' >>= (fn (header, strm'') =>
+        let
+          val (messageBody, _) = inputAll strm''
+        in
+          SOME { method = method,
+                 path = path,
+                 query = query,
+                 header = header,
+                 messageBody = messageBody }
+        end)))
 
   fun toString {method, path, query, header, messageBody} =
         let

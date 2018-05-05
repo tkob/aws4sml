@@ -230,7 +230,7 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
             method = "{{ operation.http.method }}",
             path = URI.Path.fromString "{{ operation.http.requestUri }}",
             query = URI.Query.fromList [],
-            header = HttpHeader.fromList [
+            header = valOf (HttpHeader.fromList [
               ("Content-Length", Int.toString (String.size jsonRequest)),
               (*% if metadata.targetPrefix != None %*)
               ("X-Amz-Target", "{{ metadata.targetPrefix }}.{{ name }}"),
@@ -238,7 +238,7 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
               ("X-Amz-Target", "{{ name }}"),
               (*% endif %*)
               ("Content-Type", "application/x-amz-json-{{ metadata.jsonVersion }}")
-            ],
+            ]),
             messageBody = jsonRequest
           }
           val httpResponse =
