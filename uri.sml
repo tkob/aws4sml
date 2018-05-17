@@ -3,8 +3,8 @@ structure URI :> sig
   type uri
 
   structure Path : sig
-    type segment
-    type path = segment list
+    type path
+
     val fromString : string -> path option
     val toString : path -> string
     val canonicalize : path -> path
@@ -84,8 +84,7 @@ end = struct
   }
 
   structure Path = struct
-    type segment = string
-    type path = segment list
+    type path = string list
 
     fun removeDotSegments input =
           let
