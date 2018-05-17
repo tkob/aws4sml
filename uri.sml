@@ -139,18 +139,16 @@ end = struct
       | isDelimiter _ = false
 
     fun parseIpath s =
-          if Substring.isEmpty s then SOME []
-          else
-            let
-              val fields = map Substring.string (Substring.fields isDelimiter s)
-              fun decode (field, NONE) = NONE
-                | decode (field, SOME segments) =
-                    case percentDecode field of
-                         NONE => NONE
-                       | SOME segment => SOME (segment::segments)
-            in
-              List.foldr decode (SOME []) fields
-            end
+          let
+            val fields = map Substring.string (Substring.fields isDelimiter s)
+            fun decode (field, NONE) = NONE
+              | decode (field, SOME segments) =
+                  case percentDecode field of
+                       NONE => NONE
+                     | SOME segment => SOME (segment::segments)
+          in
+            List.foldr decode (SOME []) fields
+          end
 
     fun fromString s = parseIpath (Substring.full s)
     fun toString path = String.concatWith "/" (map percentEncode path)
