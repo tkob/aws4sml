@@ -7,6 +7,7 @@ structure URI :> sig
 
     val fromString : string -> path option
     val toString : path -> string
+    val removeDotSegments : path -> path
     val canonicalize : path -> path
   end
 
@@ -86,31 +87,6 @@ end = struct
   structure Path = struct
     type path = string list
 
-    fun removeDotSegments input =
-          let
-                (* A and D *)
-            fun aAndD (".."::input) = aAndD input
-              | aAndD ("."::input) = aAndD input
-              | aAndD input = input
-            fun loop [] output = rev output
-                (* B *)
-              | loop ("."::[])    output = loop [] (""::output) (* /. *)
-              | loop ("."::input) output = loop input output    (* /./ *)
-                (* C *)
-              | loop (".."::[])    []          = loop []      []           (* C /.. *)
-              | loop (".."::[])    (""::[])    = loop []      (""::""::[]) (* C /.. *)
-              | loop (".."::[])    (_::output) = loop []      (""::output) (* C /.. *)
-              | loop (".."::input) []          = loop input   []           (* C /../ *)
-              | loop (".."::input) (""::[])    = loop input   (""::[])     (* C /../ *)
-              | loop (".."::input) (_::output) = loop input   output       (* C /../ *)
-                (* E *)
-              | loop (segment::input) output = loop input (segment::output)
-          in
-            loop (aAndD input) []
-          end
-
-    fun canonicalize path = removeDotSegments path
-
     fun isGenDelims #":" = true
       | isGenDelims #"/" = true
       | isGenDelims #"?" = true
@@ -152,6 +128,68 @@ end = struct
 
     fun fromString s = parseIpath (Substring.full s)
     fun toString path = String.concatWith "/" (map percentEncode path)
+
+    fun removeDotSegments input =
+          let
+            val inputBuffer = Substring.full (toString input)
+            fun append suffix ss =
+                  Substring.full (Substring.concat [ss, Substring.full suffix])
+            fun prepend prefix ss =
+                  Substring.full (Substring.concat [Substring.full prefix, ss])
+            fun removeLastSegment [] = []
+              | removeLastSegment (buffer as "/"::_) = buffer
+              | removeLastSegment (_::"/"::buffer) = buffer
+              | removeLastSegment (_::[]) = []
+              | removeLastSegment (_::_::_) =
+                  raise Fail "should never reach here"
+            fun loop inputBuffer outputBuffer =
+                  (* While the input buffer is not empty *)
+                  if Substring.isEmpty inputBuffer
+                  then valOf (fromString (concat (rev outputBuffer)))
+                  else
+                    (* A *)
+                    if Substring.isPrefix "../" inputBuffer then
+                      loop (Substring.triml 3 inputBuffer) outputBuffer
+                    else if Substring.isPrefix "./" inputBuffer then
+                      loop (Substring.triml 2 inputBuffer) outputBuffer
+                    (* B *)
+                    else if Substring.isPrefix "/./" inputBuffer then
+                      loop (prepend "/" (Substring.triml 3 inputBuffer)) outputBuffer
+                    else if Substring.string inputBuffer = "/." then
+                      loop (Substring.full "/") outputBuffer
+                    (* C *)
+                    else if Substring.isPrefix "/../" inputBuffer then
+                      loop
+                        (prepend "/" (Substring.triml 4 inputBuffer))
+                        (removeLastSegment outputBuffer)
+                    else if Substring.string inputBuffer = "/.." then
+                      loop
+                        (Substring.full "/")
+                        (removeLastSegment outputBuffer)
+                    (* D *)
+                    else if Substring.string inputBuffer = "." then
+                      loop (Substring.full "") outputBuffer
+                    else if Substring.string inputBuffer = ".." then
+                      loop (Substring.full "") outputBuffer
+                    (* E *)
+                    else
+                      let
+                        val (inputBuffer, outputBuffer) =
+                          if Substring.sub (inputBuffer, 0) = #"/" then
+                            (Substring.triml 1 inputBuffer, "/"::outputBuffer)
+                          else
+                            (inputBuffer, outputBuffer)
+                        val (firstSegment, inputBuffer) =
+                          Substring.splitl (fn c => c <> #"/") inputBuffer
+                      in
+                        loop inputBuffer (Substring.string firstSegment::outputBuffer)
+                      end
+          in
+            loop inputBuffer []
+          end
+
+    fun canonicalize path = removeDotSegments path
+
   end
 
   structure Query = struct
