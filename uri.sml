@@ -85,7 +85,8 @@ end = struct
   }
 
   structure Path = struct
-    type path = string list
+    datatype segment_or_slash = Segment of string | Slash
+    type path = segment_or_slash list
 
     fun isGenDelims #":" = true
       | isGenDelims #"/" = true
@@ -114,78 +115,73 @@ end = struct
     fun isDelimiter #"/" = true
       | isDelimiter _ = false
 
-    fun parseIpath s =
+    fun fromString s =
           let
-            val fields = map Substring.string (Substring.fields isDelimiter s)
-            fun decode (field, NONE) = NONE
-              | decode (field, SOME segments) =
-                  case percentDecode field of
-                       NONE => NONE
-                     | SOME segment => SOME (segment::segments)
+            val ss = Substring.full s
+            fun consume (ss, path) =
+                  if Substring.isEmpty ss then SOME (rev path)
+                  else
+                    if Substring.sub (ss, 0) = #"/" then
+                      consume (Substring.triml 1 ss, Slash::path)
+                    else
+                      let
+                        val (segment, ss') = Substring.splitl (fn c => c <> #"/") ss
+                      in
+                        case percentDecode (Substring.string segment) of
+                             NONE => NONE
+                           | SOME segment =>
+                               consume (ss', Segment segment::path)
+                      end
           in
-            List.foldr decode (SOME []) fields
+            consume (ss, [])
           end
 
-    fun fromString s = parseIpath (Substring.full s)
-    fun toString path = String.concatWith "/" (map percentEncode path)
+    fun toString path =
+          let
+            fun encode Slash = "/"
+              | encode (Segment segment) = percentEncode segment
+          in
+            String.concat (map encode path)
+          end
 
     fun removeDotSegments input =
           let
-            val inputBuffer = Substring.full (toString input)
-            fun append suffix ss =
-                  Substring.full (Substring.concat [ss, Substring.full suffix])
-            fun prepend prefix ss =
-                  Substring.full (Substring.concat [Substring.full prefix, ss])
             fun removeLastSegment [] = []
-              | removeLastSegment (buffer as "/"::_) = buffer
-              | removeLastSegment (_::"/"::buffer) = buffer
-              | removeLastSegment (_::[]) = []
-              | removeLastSegment (_::_::_) =
+              | removeLastSegment (buffer as Slash::_) = buffer
+              | removeLastSegment (Segment _::Slash::buffer) = buffer
+              | removeLastSegment (Segment _::[]) = []
+              | removeLastSegment (Segment _::Segment _::_) =
                   raise Fail "should never reach here"
-            fun loop inputBuffer outputBuffer =
-                  (* While the input buffer is not empty *)
-                  if Substring.isEmpty inputBuffer
-                  then valOf (fromString (concat (rev outputBuffer)))
-                  else
-                    (* A *)
-                    if Substring.isPrefix "../" inputBuffer then
-                      loop (Substring.triml 3 inputBuffer) outputBuffer
-                    else if Substring.isPrefix "./" inputBuffer then
-                      loop (Substring.triml 2 inputBuffer) outputBuffer
-                    (* B *)
-                    else if Substring.isPrefix "/./" inputBuffer then
-                      loop (prepend "/" (Substring.triml 3 inputBuffer)) outputBuffer
-                    else if Substring.string inputBuffer = "/." then
-                      loop (Substring.full "/") outputBuffer
-                    (* C *)
-                    else if Substring.isPrefix "/../" inputBuffer then
-                      loop
-                        (prepend "/" (Substring.triml 4 inputBuffer))
-                        (removeLastSegment outputBuffer)
-                    else if Substring.string inputBuffer = "/.." then
-                      loop
-                        (Substring.full "/")
-                        (removeLastSegment outputBuffer)
-                    (* D *)
-                    else if Substring.string inputBuffer = "." then
-                      loop (Substring.full "") outputBuffer
-                    else if Substring.string inputBuffer = ".." then
-                      loop (Substring.full "") outputBuffer
-                    (* E *)
-                    else
-                      let
-                        val (inputBuffer, outputBuffer) =
-                          if Substring.sub (inputBuffer, 0) = #"/" then
-                            (Substring.triml 1 inputBuffer, "/"::outputBuffer)
-                          else
-                            (inputBuffer, outputBuffer)
-                        val (firstSegment, inputBuffer) =
-                          Substring.splitl (fn c => c <> #"/") inputBuffer
-                      in
-                        loop inputBuffer (Substring.string firstSegment::outputBuffer)
-                      end
+            fun loop [] outputBuffer = rev outputBuffer
+                (* A *)
+              | loop (Segment ".."::Slash::inputBuffer) outputBuffer =
+                  loop inputBuffer outputBuffer
+              | loop (Segment "."::Slash::inputBuffer) outputBuffer =
+                  loop inputBuffer outputBuffer
+                (* B *)
+              | loop (Slash::Segment "."::Slash::inputBuffer) outputBuffer =
+                  loop (Slash::inputBuffer) outputBuffer
+              | loop (Slash::Segment "."::inputBuffer) outputBuffer =
+                  loop (Slash::inputBuffer) outputBuffer
+                (* C *)
+              | loop (Slash::Segment ".."::Slash::inputBuffer) outputBuffer =
+                      loop (Slash::inputBuffer) (removeLastSegment outputBuffer)
+              | loop (Slash::Segment ".."::inputBuffer) outputBuffer =
+                      loop (Slash::inputBuffer) (removeLastSegment outputBuffer)
+                (* D *)
+              | loop (Segment "."::[]) outputBuffer =
+                      loop [] outputBuffer
+              | loop (Segment ".."::[]) outputBuffer =
+                      loop [] outputBuffer
+                (* E *)
+              | loop (Segment segment::inputBuffer) outputBuffer =
+                  loop inputBuffer (Segment segment::outputBuffer)
+              | loop (Slash::Segment segment::inputBuffer) outputBuffer =
+                  loop inputBuffer (Segment segment::Slash::outputBuffer)
+              | loop (Slash::inputBuffer) outputBuffer =
+                  loop inputBuffer (Slash::outputBuffer)
           in
-            loop inputBuffer []
+            loop input []
           end
 
     fun canonicalize path = removeDotSegments path
