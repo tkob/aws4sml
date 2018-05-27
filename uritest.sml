@@ -27,7 +27,13 @@ structure UriTest = struct
     ("path from abc/def/", testPathFromAndToString "abc/def/"),
     ("path from /%20",     testPathFromAndToString "/%20"),
     ("path from /%ff",     testPathFromAndToString' "/%ff" "/%FF"),
+
     ("path from fred@example.com", testPathFromAndToString' "fred@example.com" "fred@example.com"),
+    ("path from /c=GB", testPathFromAndToString' "/c=GB" "/c=GB"),
+    ("path from comp.infosystems.www.servers.unix", testPathFromAndToString' "comp.infosystems.www.servers.unix" "comp.infosystems.www.servers.unix"),
+    ("path from +1-816-555-1212", testPathFromAndToString' "+1-816-555-1212" "+1-816-555-1212"),
+    ("path from oasis:names:specification:docbook:dtd:xml:4.1.2", testPathFromAndToString' "oasis:names:specification:docbook:dtd:xml:4.1.2" "oasis:names:specification:docbook:dtd:xml:4.1.2"),
+
     ("path from /%",       testPathFromInvalidString "/%"),
     ("path from /%gf",     testPathFromInvalidString "/%gf"),
     ("path from /%f",      testPathFromInvalidString "/%f"),
