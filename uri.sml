@@ -27,6 +27,30 @@ structure URI :> sig
   val toString : uri -> string
 
 end = struct
+    fun isGenDelims #":" = true
+      | isGenDelims #"/" = true
+      | isGenDelims #"?" = true
+      | isGenDelims #"#" = true
+      | isGenDelims #"[" = true
+      | isGenDelims #"]" = true
+      | isGenDelims #"@" = true
+      | isGenDelims _ = false
+
+    fun isSubDelims #"!" = true
+      | isSubDelims #"$" = true
+      | isSubDelims #"&" = true
+      | isSubDelims #"'" = true
+      | isSubDelims #"(" = true
+      | isSubDelims #")" = true
+      | isSubDelims #"*" = true
+      | isSubDelims #"+" = true
+      | isSubDelims #"," = true
+      | isSubDelims #";" = true
+      | isSubDelims #"=" = true
+      | isSubDelims _ = false
+
+    fun isReserved c = isGenDelims c orelse isSubDelims c
+
     fun isUnreserved #"-" = true
       | isUnreserved #"." = true
       | isUnreserved #"_" = true
@@ -36,7 +60,7 @@ end = struct
   fun percentEncode s =
         let
           fun encodeChar c =
-                if isUnreserved c then
+                if isUnreserved c orelse isSubDelims c orelse c = #":" orelse c = #"@" then
                   String.str c
                 else
                   "%" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord c))
@@ -87,30 +111,6 @@ end = struct
   structure Path = struct
     datatype segment_or_slash = Segment of string | Slash
     type path = segment_or_slash list
-
-    fun isGenDelims #":" = true
-      | isGenDelims #"/" = true
-      | isGenDelims #"?" = true
-      | isGenDelims #"#" = true
-      | isGenDelims #"[" = true
-      | isGenDelims #"]" = true
-      | isGenDelims #"@" = true
-      | isGenDelims _ = false
-
-    fun isSubDelims #"!" = true
-      | isSubDelims #"$" = true
-      | isSubDelims #"&" = true
-      | isSubDelims #"'" = true
-      | isSubDelims #"(" = true
-      | isSubDelims #")" = true
-      | isSubDelims #"*" = true
-      | isSubDelims #"+" = true
-      | isSubDelims #"," = true
-      | isSubDelims #";" = true
-      | isSubDelims #"=" = true
-      | isSubDelims _ = false
-
-    fun isReserved c = isGenDelims c orelse isSubDelims c
 
     fun isDelimiter #"/" = true
       | isDelimiter _ = false

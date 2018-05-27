@@ -27,6 +27,7 @@ structure UriTest = struct
     ("path from abc/def/", testPathFromAndToString "abc/def/"),
     ("path from /%20",     testPathFromAndToString "/%20"),
     ("path from /%ff",     testPathFromAndToString' "/%ff" "/%FF"),
+    ("path from fred@example.com", testPathFromAndToString' "fred@example.com" "fred@example.com"),
     ("path from /%",       testPathFromInvalidString "/%"),
     ("path from /%gf",     testPathFromInvalidString "/%gf"),
     ("path from /%f",      testPathFromInvalidString "/%f"),
