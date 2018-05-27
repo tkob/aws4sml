@@ -58,13 +58,7 @@ end = struct
       | isUnreserved c = Char.isAlpha c orelse Char.isDigit c
 
   fun percentEncodeChar c =
-        if isUnreserved c orelse isSubDelims c orelse c = #":" orelse c = #"@" then
-          String.str c
-        else
-          "%" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord c))
-
-  fun percentEncode s =
-        String.concat (map percentEncodeChar (explode s))
+        "%" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord c))
 
   fun percentDecode s =
         let
@@ -137,6 +131,13 @@ end = struct
 
     fun toString path =
           let
+            fun percentEncodeChar' c =
+              if isUnreserved c orelse isSubDelims c orelse c = #":" orelse c = #"@" then
+                String.str c
+              else
+                percentEncodeChar c
+            fun percentEncode s =
+                  String.concat (map percentEncodeChar' (explode s))
             fun encode Slash = "/"
               | encode (Segment segment) = percentEncode segment
           in
