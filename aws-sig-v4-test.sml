@@ -69,6 +69,16 @@ structure AwsSigV4Test = struct
                                     NONE => false
                                   | SOME ext => ext = "req"
           val reqFiles = List.filter isReqFile (walk suiteDir)
+          (* some cases are intentionally excluded *)
+          val excluded = [
+            "get-header-value-multiline.req",
+            "get-space.req",
+            "get-slash.req",
+            "get-slashes.req"
+          ]
+          fun included path =
+            not (List.exists (fn path' => String.isSuffix path' path) excluded)
+          val reqFiles = List.filter included reqFiles
           fun labelTest reqFilePath =
                 (reqFilePath, fn () => test reqFilePath)
         in
