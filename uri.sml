@@ -57,16 +57,15 @@ end = struct
       | isUnreserved #"~" = true
       | isUnreserved c = Char.isAlpha c orelse Char.isDigit c
 
+  fun percentEncodeChar c =
+        if isUnreserved c orelse isSubDelims c orelse c = #":" orelse c = #"@" then
+          String.str c
+        else
+          "%" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord c))
+
   fun percentEncode s =
-        let
-          fun encodeChar c =
-                if isUnreserved c orelse isSubDelims c orelse c = #":" orelse c = #"@" then
-                  String.str c
-                else
-                  "%" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (Char.ord c))
-        in
-          String.concat (map encodeChar (explode s))
-        end
+        String.concat (map percentEncodeChar (explode s))
+
   fun percentDecode s =
         let
           val s = Substring.full s
