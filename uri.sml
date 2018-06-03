@@ -189,14 +189,26 @@ end = struct
   end
 
   structure Query = struct
-    type query = (string * string) list
+    type query = string
 
-    fun fromList l = l
-    fun toList h = h
+    fun fromList l =
+          let
+            fun percentEncodeChar' c =
+              if isUnreserved c orelse isSubDelims c
+                  orelse c = #":" orelse c = #"@"
+                  orelse c = #"/" orelse c = #"?" then
+                String.str c
+              else
+                percentEncodeChar c
+            fun percentEncode s =
+                  String.concat (map percentEncodeChar' (explode s))
+            fun parameterToString (name, value) =
+                  percentEncode name ^ "=" ^ percentEncode value
+          in
+            String.concatWith "&" (map parameterToString l)
+          end
 
-    val isEmpty = List.null
-
-    fun fromString s =
+    fun toList s =
           let
             val s = Substring.dropl (fn c => c = #"?") (Substring.full s)
             val parameters = Substring.tokens (fn c => c = #"&") s
@@ -208,15 +220,14 @@ end = struct
                     (Substring.string name, Substring.string value)
                   end
           in
-            SOME (map parseParameter parameters)
+            map parseParameter parameters
           end
 
-    fun toString query =
-          let
-            fun parameterToString (name, value) =  name ^ "=" ^ value
-          in
-            String.concatWith "&" (map parameterToString query)
-          end
+    fun isEmpty query = String.size query = 0
+
+    fun fromString s = SOME s
+
+    fun toString query = query
   end
 
   type uri = {
