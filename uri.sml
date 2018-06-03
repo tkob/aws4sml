@@ -187,7 +187,7 @@ end = struct
   end
 
   structure Query = struct
-    type query = string
+    type query = string (* percent-encoded representation *)
 
     fun fromList l =
           let
@@ -221,7 +221,11 @@ end = struct
             map parseParameter parameters
           end
 
-    fun fromString s = SOME s
+    fun fromString s =
+          (* just validate, not actually decode *)
+          case percentDecode s of
+               NONE => NONE
+             | SOME _ => SOME s
 
     fun toString query = query
   end
