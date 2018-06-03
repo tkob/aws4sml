@@ -21,7 +21,16 @@ structure URI :> sig
     val toString : query -> string
   end
 
+  structure Fragment : sig
+    type fragment
+
+    val fromString : string -> fragment option
+    val toString : fragment -> string
+  end
+
   val host : uri -> string option
+  val fragment : uri -> Fragment.fragment option
+
   val toString : uri -> string
 
 end = struct
@@ -230,16 +239,30 @@ end = struct
     fun toString query = query
   end
 
+  structure Fragment = struct
+    type fragment = string (* percent-encoded representation *)
+
+    fun fromString s =
+          (* just validate, not actually decode *)
+          case percentDecode s of
+               NONE => NONE
+             | SOME _ => SOME s
+
+    fun toString fragment = fragment
+  end
+
   type uri = {
     scheme : string,
     authority : authority option,
     path : Path.path,
     query : Query.query option,
-    fragment : string option
+    fragment : Fragment.fragment option
   }
 
   fun host ({authority = NONE, ...}: uri) = NONE
     | host ({authority = SOME {host, ...}, ...} : uri) = SOME host
+
+  fun fragment (uri : uri) = #fragment uri
 
   fun toString {scheme, authority, path, query, fragment} =
         let
