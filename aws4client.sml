@@ -21,7 +21,10 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
           val canonicalUri = URI.Path.toString (URI.Path.canonicalize path)
           fun parameterToString (name, value) =  name ^ "=" ^ value
           val canonicalQueryString =
-            String.concatWith "&" (sort (map parameterToString (URI.Query.toList query)))
+            case query of
+                 NONE => ""
+               | SOME query =>
+                   String.concatWith "&" (sort (map parameterToString (URI.Query.toList query)))
           fun lowerCase s = String.map Char.toLower s
           fun trimAll s =
                 let

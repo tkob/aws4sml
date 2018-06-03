@@ -2,7 +2,7 @@ structure HttpRequest :> sig
   type request = {
     method: string,
     path : URI.Path.path,
-    query : URI.Query.query,
+    query : URI.Query.query option,
     header: HttpHeader.header,
     messageBody: string
   }
@@ -18,7 +18,7 @@ end = struct
   type request = {
     method: string,
     path : URI.Path.path,
-    query : URI.Query.query,
+    query : URI.Query.query option,
     header: HttpHeader.header,
     messageBody: string
   }
@@ -37,12 +37,19 @@ end = struct
             Substring.splitl (fn c => not (Char.isSpace c) andalso c <> #"?") line
           val (query, _) = Substring.splitl (neg Char.isSpace) line
         in
-          case URI.Query.fromString (Substring.string query) of
-               NONE => NONE
-             | SOME query =>
-                 SOME { method = Substring.string method,
-                        path = valOf (URI.Path.fromString (Substring.string path)),
-                        query = query }
+          URI.Path.fromString (Substring.string path) >>= (fn path =>
+          (if Substring.size query = 0
+           then SOME NONE
+           else
+            let
+              val query = Substring.string (Substring.triml 1 query)
+            in
+              Option.map SOME (URI.Query.fromString query)
+            end)
+                                                      >>= (fn query =>
+            SOME { method = Substring.string method,
+                   path = path,
+                   query = query }))
         end
 
   fun fromStream {inputLine, inputN, inputAll} strm =
@@ -62,9 +69,10 @@ end = struct
   fun toString {method, path, query, header, messageBody} =
         let
           val requestTarget =
-            URI.Path.toString path ^ (if URI.Query.isEmpty query
-                                      then ""
-                                      else "?" ^ URI.Query.toString query)
+            URI.Path.toString path ^ (case query of
+                                           NONE => ""
+                                         | SOME query =>
+                                             "?" ^ URI.Query.toString query)
         in
           method ^ " " ^ requestTarget ^ " " ^ "HTTP/1.1" ^ "\r\n" ^
           HttpHeader.toString header ^
