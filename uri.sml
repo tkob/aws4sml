@@ -24,6 +24,9 @@ structure URI :> sig
   structure Fragment : sig
     type fragment
 
+    val mkFragment : string -> fragment
+    val getString : fragment -> string
+
     val fromString : string -> fragment option
     val toString : fragment -> string
   end
@@ -240,15 +243,14 @@ end = struct
   end
 
   structure Fragment = struct
-    type fragment = string (* percent-encoded representation *)
+    type fragment = string
 
-    fun fromString s =
-          (* just validate, not actually decode *)
-          case percentDecode s of
-               NONE => NONE
-             | SOME _ => SOME s
+    fun mkFragment s = s
+    fun getString fragment = fragment
 
-    fun toString fragment = fragment
+    fun fromString s = percentDecode s
+    fun toString fragment =
+          String.concat (map percentEncodeChar (explode fragment))
   end
 
   type uri = {
