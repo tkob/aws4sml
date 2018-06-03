@@ -250,7 +250,17 @@ end = struct
 
     fun fromString s = percentDecode s
     fun toString fragment =
-          String.concat (map percentEncodeChar (explode fragment))
+          let
+            fun percentEncodeChar' c =
+              if isUnreserved c orelse isSubDelims c
+                  orelse c = #":" orelse c = #"@"
+                  orelse c = #"/" orelse c = #"?" then
+                String.str c
+              else
+                percentEncodeChar c
+          in
+            String.concat (map percentEncodeChar' (explode fragment))
+          end
   end
 
   type uri = {
