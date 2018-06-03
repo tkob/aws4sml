@@ -13,6 +13,14 @@ structure AwsSigV4Test = struct
             inputN=TextIO.StreamIO.inputN,
             inputAll=TextIO.StreamIO.inputAll} insReq)
 
+          val creqFilePath =
+            OS.Path.joinBaseExt {base = OS.Path.base reqFilePath, ext = SOME "creq"}
+          val insCreq = TextIO.openIn creqFilePath
+          val expectedCreq = TextIO.inputAll insCreq
+
+          val (actualCreq, signedHeaders) =
+            Aws4Client.createCanonicalRequest request
+
           val authzFilePath =
             OS.Path.joinBaseExt {base = OS.Path.base reqFilePath, ext = SOME "authz"}
           val insAuthz = TextIO.openIn authzFilePath
@@ -30,6 +38,7 @@ structure AwsSigV4Test = struct
               date
               request
         in
+          Assert.assertEqualString expectedCreq actualCreq;
           Assert.assertEqualString
             expectedAuthorizationHeader actualAuthorizationHeader
         end
