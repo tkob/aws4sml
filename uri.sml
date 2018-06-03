@@ -210,7 +210,7 @@ end = struct
 
     fun toList s =
           let
-            val s = Substring.dropl (fn c => c = #"?") (Substring.full s)
+            val s = Substring.full s
             val parameters = Substring.tokens (fn c => c = #"&") s
             fun parseParameter param =
                   let
@@ -234,7 +234,7 @@ end = struct
     scheme : string,
     authority : authority option,
     path : Path.path,
-    query : Query.query,
+    query : Query.query option,
     fragment : string option
   }
 
@@ -258,7 +258,7 @@ end = struct
                    ^ Path.toString path
         in
           scheme ^ ":" ^ hierPart
-          ^ (if Query.isEmpty query then "" else "?" ^ Query.toString query)
+          ^ (case query of NONE => "" | SOME query => "?" ^ Query.toString query)
           ^ (case fragment of NONE => "" | SOME fragment => "#" ^ fragment)
         end
 end
