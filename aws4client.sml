@@ -1,5 +1,15 @@
 functor Aws4ClientFun(val date : unit -> Date.date) = struct
   fun sort (l : string list) : string list  = ListMergeSort.sort (fn (x, y) => x > y) l
+  fun sortKV (l : (string * string) list) : (string * string) list =
+        let
+          fun compare ((k1, v1), (k2, v2)) =
+                if k1 = k2 then
+                  v1 > v2
+                else
+                  k1 > k2
+        in
+          ListMergeSort.sort compare l
+        end
   fun contains ([], x) = false
     | contains (x'::xs, x) = if x = x' then true else contains (xs, x)
   fun uniq xs =
@@ -24,7 +34,7 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
             case query of
                  NONE => ""
                | SOME query =>
-                   String.concatWith "&" (sort (map parameterToString (URI.Query.toList query)))
+                   URI.Query.toString (URI.Query.fromList (sortKV (URI.Query.toList query)))
           fun lowerCase s = String.map Char.toLower s
           fun trimAll s =
                 let
