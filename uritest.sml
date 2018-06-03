@@ -18,6 +18,11 @@ structure UriTest = struct
   fun testPathFromInvalidString s () =
         Assert.assertNone (Path.fromString s)
 
+  fun testQueryFromListToString l s () =
+        Assert.assertEqualString
+          s
+          (Query.toString (Query.fromList l))
+
   val suite = Test.labelTests [
     ("path from \"\"",     testPathFromAndToString ""),
     ("path from /",        testPathFromAndToString "/"),
@@ -51,7 +56,16 @@ structure UriTest = struct
     ("remove-dot-segments 11", testRemoveDotSegments "/a/../" "/"),
     ("remove-dot-segments 12", testRemoveDotSegments "/a/.."  "/"),
     ("remove-dot-segments 13", testRemoveDotSegments "."      ""),
-    ("remove-dot-segments 14", testRemoveDotSegments ".."     "")
+    ("remove-dot-segments 14", testRemoveDotSegments ".."     ""),
+
+    ("empty list to query", testQueryFromListToString [] ""),
+    ("blank key-value to query", testQueryFromListToString [("", "")] "="),
+    ("blank value to query", testQueryFromListToString [("a", "")] "a="),
+    ("blank key to query", testQueryFromListToString [("", "b")] "=b"),
+    ("key-value to query", testQueryFromListToString [("a", "b")] "a=b"),
+    ("key-value to query: slash and question mark",
+      testQueryFromListToString [("a", "http://foo@example.com?q")] "a=http://foo@example.com?q"),
+    ("key-value to query: space", testQueryFromListToString [("a", " ")] "a=%20")
   ]
 
   fun run () =
