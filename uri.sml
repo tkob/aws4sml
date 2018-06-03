@@ -17,8 +17,6 @@ structure URI :> sig
     val fromList : (string * string) list -> query
     val toList : query -> (string * string) list
 
-    val isEmpty : query -> bool
-
     val fromString : string -> query option
     val toString : query -> string
   end
@@ -222,8 +220,6 @@ end = struct
           in
             map parseParameter parameters
           end
-
-    fun isEmpty query = String.size query = 0
 
     fun fromString s = SOME s
 
