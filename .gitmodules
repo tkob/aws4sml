@@ -8,3 +8,6 @@
 [submodule "SMLUnit"]
 	path = SMLUnit
 	url = https://github.com/smlsharp/SMLUnit.git
+[submodule "inifile"]
+	path = inifile
+	url = https://github.com/tkob/inifile.git

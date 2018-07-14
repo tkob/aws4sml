@@ -9,7 +9,7 @@ local
 
     extdate.mlb
 
-    inifile.sml
+    inifile/inifile.mlb
 
     $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
     $(SML_LIB)/smlnj-lib/JSON/json-lib.mlb

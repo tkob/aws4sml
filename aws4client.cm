@@ -12,7 +12,7 @@ is
     hmac.cm
     httpclient.cm
     extdate.cm
-    inifile.sml
+    inifile/inifile.cm
 
     awscredentials.sml
     aws4client.sml
