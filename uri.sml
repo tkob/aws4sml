@@ -37,7 +37,12 @@ structure URI :> sig
     val toString : fragment -> string
   end
 
+  val scheme : uri -> string option
+  val userInfo : uri -> string option
   val host : uri -> string option
+  val port : uri -> int option
+  val path : uri -> Path.path
+  val query : uri -> Query.query option
   val fragment : uri -> Fragment.fragment option
 
   val fromString : string -> uri option
@@ -317,8 +322,20 @@ end = struct
     fragment : Fragment.fragment option
   }
 
+  fun scheme (uri : uri) = #scheme uri
+
+  fun userInfo ({authority = NONE, ...}: uri) = NONE
+    | userInfo ({authority = SOME {userInfo, ...}, ...} : uri) = userInfo
+
   fun host ({authority = NONE, ...}: uri) = NONE
     | host ({authority = SOME {host, ...}, ...} : uri) = SOME host
+
+  fun port ({authority = NONE, ...}: uri) = NONE
+    | port ({authority = SOME {port, ...}, ...} : uri) = port
+
+  fun path ({path = path, ...} : uri) = path
+
+  fun query (uri : uri) = #query uri
 
   fun fragment (uri : uri) = #fragment uri
 
