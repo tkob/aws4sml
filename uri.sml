@@ -6,6 +6,7 @@ structure URI :> sig
     type authority
 
     val fromString : string -> authority option
+    val toString : authority -> string
   end
 
   structure Path : sig
@@ -159,6 +160,26 @@ end = struct
               userInfo = userInfo,
               host = host,
               port = port })))
+          end
+
+    fun toString {userInfo, host, port} =
+          let
+            fun percentEncodeChar' c =
+              if isUnreserved c orelse isSubDelims c orelse c = #":" then
+                String.str c
+              else
+                percentEncodeChar c
+            fun encode userInfo =
+              String.concat (map percentEncodeChar' (explode userInfo))
+            val userInfo = case userInfo of
+                                NONE => ""
+                              | SOME userInfo => encode userInfo ^ "@"
+
+            val port = case port of
+                            NONE => ""
+                          | SOME port => ":" ^ Int.toString port
+          in
+            userInfo ^ host ^ port
           end
   end
 
@@ -394,24 +415,9 @@ end = struct
         end
 
   fun toString {scheme, authority, path, query, fragment} =
-        let
-          val authority =
-            case authority of
-                 NONE => ""
-               | SOME {userInfo, host, port} =>
-                   "//"
-                   ^ (case userInfo of
-                           NONE => ""
-                         | SOME userInfo => userInfo ^ "@")
-                   ^ host
-                   ^ (case port of
-                           NONE => ""
-                         | SOME port => ":" ^ Int.toString port)
-        in
-          (case scheme of NONE => "" | SOME scheme => scheme ^ ":")
-          ^ authority
-          ^ Path.toString path
-          ^ (case query of NONE => "" | SOME query => "?" ^ Query.toString query)
-          ^ (case fragment of NONE => "" | SOME fragment => "#" ^ Fragment.toString fragment)
-        end
+        (case scheme of NONE => "" | SOME scheme => scheme ^ ":")
+        ^ (case authority of NONE => "" | SOME authority => "//" ^ Authority.toString authority)
+        ^ Path.toString path
+        ^ (case query of NONE => "" | SOME query => "?" ^ Query.toString query)
+        ^ (case fragment of NONE => "" | SOME fragment => "#" ^ Fragment.toString fragment)
 end
