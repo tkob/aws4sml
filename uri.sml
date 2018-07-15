@@ -2,6 +2,12 @@
 structure URI :> sig
   type uri
 
+  structure Authority : sig
+    type authority
+
+    val fromString : string -> authority option
+  end
+
   structure Path : sig
     type path
 
@@ -34,9 +40,14 @@ structure URI :> sig
   val host : uri -> string option
   val fragment : uri -> Fragment.fragment option
 
+  val fromString : string -> uri option
   val toString : uri -> string
 
 end = struct
+    infix >>=
+    fun (SOME x) >>= k = k x
+      | NONE     >>= k = NONE
+
     fun isGenDelims #":" = true
       | isGenDelims #"/" = true
       | isGenDelims #"?" = true
@@ -105,11 +116,46 @@ end = struct
           default (s, [])
         end
 
-  type authority = {
-    userInfo : string option,
-    host : string,
-    port : int option
-  }
+  structure Authority = struct
+    type authority = {
+      userInfo : string option,
+      host : string,
+      port : int option
+    }
+
+    fun fromString s =
+          let
+            val s = Substring.full s
+            val (userInfo, s) =
+              if Substring.isSubstring "@" s then
+                let
+                  val (userInfo, s) =
+                    Substring.splitl (fn c => c <> #"@") s
+                in
+                  (Option.map SOME (percentDecode (Substring.string userInfo)), Substring.triml 1 s)
+                end
+              else
+                (SOME NONE, s)
+            val (host, s) =
+              let
+                val (host, s) = Substring.splitl (fn c => c <> #":") s
+              in
+                (percentDecode (Substring.string host), s)
+              end
+            val port =
+              if Substring.isEmpty s
+              then SOME NONE
+              else Option.map SOME (Int.fromString (Substring.string (Substring.triml 1 s)))
+          in
+            userInfo >>= (fn userInfo =>
+            host     >>= (fn host =>
+            port     >>= (fn port =>
+            SOME {
+              userInfo = userInfo,
+              host = host,
+              port = port })))
+          end
+  end
 
   structure Path = struct
     datatype segment_or_slash = Segment of string | Slash
@@ -264,8 +310,8 @@ end = struct
   end
 
   type uri = {
-    scheme : string,
-    authority : authority option,
+    scheme : string option,
+    authority : Authority.authority option,
     path : Path.path,
     query : Query.query option,
     fragment : Fragment.fragment option
@@ -276,9 +322,63 @@ end = struct
 
   fun fragment (uri : uri) = #fragment uri
 
+  fun fromString s =
+        let
+          val s = Substring.full s
+          val (scheme, s') =
+            let
+              fun isSchemeChar c =
+                    Char.isAlpha c orelse Char.isDigit c
+                    orelse c = #"+" orelse c = #"-" orelse c = #"."
+              val (scheme, s') = Substring.splitl isSchemeChar s
+            in
+              if (not (Substring.isEmpty scheme)) andalso
+                 Char.isAlpha (Substring.sub (scheme, 0)) andalso
+                 (not (Substring.isEmpty s')) andalso
+                 Substring.sub (s', 0) = #":"
+              then
+                (SOME (Substring.string scheme), Substring.triml 1 s')
+              else
+                (NONE, s)
+            end
+          val (authority, s'') =
+            if Substring.isPrefix "//" s'
+            then
+              let
+                val (authority, s'') =
+                  Substring.splitl (fn c => c <> #"/" andalso c <> #"?" andalso c <> #"#") (Substring.triml 2 s')
+              in
+                (Option.map SOME (Authority.fromString (Substring.string authority)), s'')
+              end
+            else
+              (SOME NONE, s')
+          val (path, s''') =
+            Substring.splitl (fn c => c <> #"?" andalso c <> #"#") s''
+          val path = Path.fromString (Substring.string path)
+          val (query, fragment) =
+              Substring.splitl (fn c => c <> #"#") s'''
+          val query =
+            if Substring.isEmpty query then SOME NONE
+            else Option.map SOME (Query.fromString (Substring.string (Substring.triml 1 query)))
+          val fragment =
+            if Substring.isEmpty fragment then SOME NONE
+            else Option.map SOME (Fragment.fromString (Substring.string (Substring.triml 1 fragment)))
+        in
+          authority >>= (fn authority =>
+          path      >>= (fn path =>
+          query     >>= (fn query =>
+          fragment  >>= (fn fragment =>
+          SOME {
+            scheme = scheme,
+            authority = authority,
+            path = path,
+            query = query,
+            fragment = fragment }))))
+        end
+
   fun toString {scheme, authority, path, query, fragment} =
         let
-          val hierPart =
+          val authority =
             case authority of
                  NONE => ""
                | SOME {userInfo, host, port} =>
@@ -290,10 +390,11 @@ end = struct
                    ^ (case port of
                            NONE => ""
                          | SOME port => ":" ^ Int.toString port)
-                   ^ Path.toString path
         in
-          scheme ^ ":" ^ hierPart
+          (case scheme of NONE => "" | SOME scheme => scheme ^ ":")
+          ^ authority
+          ^ Path.toString path
           ^ (case query of NONE => "" | SOME query => "?" ^ Query.toString query)
-          ^ (case fragment of NONE => "" | SOME fragment => "#" ^ fragment)
+          ^ (case fragment of NONE => "" | SOME fragment => "#" ^ Fragment.toString fragment)
         end
 end
