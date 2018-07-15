@@ -5,6 +5,10 @@ structure URI :> sig
   structure Authority : sig
     type authority
 
+    val userInfo : authority -> string option
+    val host : authority -> string
+    val port : authority -> int option
+
     val fromString : string -> authority option
     val toString : authority -> string
   end
@@ -39,6 +43,7 @@ structure URI :> sig
   end
 
   val scheme : uri -> string option
+  val authority : uri -> Authority.authority option
   val userInfo : uri -> string option
   val host : uri -> string option
   val port : uri -> int option
@@ -128,6 +133,10 @@ end = struct
       host : string,
       port : int option
     }
+
+    fun userInfo (authority : authority) = #userInfo authority
+    fun host (authority : authority) = #host authority
+    fun port (authority : authority) = #port authority
 
     fun fromString s =
           let
@@ -344,6 +353,8 @@ end = struct
   }
 
   fun scheme (uri : uri) = #scheme uri
+
+  fun authority (uri : uri) = #authority uri
 
   fun userInfo ({authority = NONE, ...}: uri) = NONE
     | userInfo ({authority = SOME {userInfo, ...}, ...} : uri) = userInfo
