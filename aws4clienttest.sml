@@ -7,8 +7,7 @@ structure Aws4ClientTest = struct
                              minute=9,
                              second=54,
                              offset=SOME (Time.zeroTime) }
-  structure MockAws4Client= Aws4ClientFun(val date = fn () => mockDate)
-  open MockAws4Client
+  open Aws4Client
 
   structure Assert = SMLUnit.Assert
   structure Test = SMLUnit.Test

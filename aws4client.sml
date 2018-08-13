@@ -1,4 +1,4 @@
-functor Aws4ClientFun(val date : unit -> Date.date) = struct
+structure Aws4Client = struct
   fun sort (l : string list) : string list  = ListMergeSort.sort (fn (x, y) => x > y) l
   fun sortKV (l : (string * string) list) : (string * string) list =
         let
@@ -177,5 +177,3 @@ functor Aws4ClientFun(val date : unit -> Date.date) = struct
         end
 
 end
-
-structure Aws4Client = Aws4ClientFun(val date = fn () => Date.fromTimeUniv (Time.now ()))
