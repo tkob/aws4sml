@@ -229,7 +229,7 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
           val httpRequest = {
             method = "{{ operation.http.method }}",
             path = valOf (URI.Path.fromString "{{ operation.http.requestUri }}"),
-            query = URI.Query.fromList [],
+            query = NONE,
             header = valOf (HttpHeader.fromList [
               ("Content-Length", Int.toString (String.size jsonRequest)),
               (*% if metadata.targetPrefix != None %*)
