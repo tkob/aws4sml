@@ -24,3 +24,4 @@ generate: strgen.py
 
 clean:
 	rm -rf generated/
+	rm -rf SMLUnit/src/main/.cm/
