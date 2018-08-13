@@ -171,7 +171,6 @@ structure Aws4Client = struct
         let
           val requestWithSignature =
             addSignatureToRequest (host, region, service, accessKey, secret) date request
-          val _ = print (HttpRequest.toString requestWithSignature)
        in
           HttpClient.doRequest readWrite (sock, requestWithSignature)
         end
