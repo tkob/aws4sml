@@ -23,6 +23,9 @@ structure UriTest = struct
           s
           (Query.toString (Query.fromList l))
 
+  fun testUriFromAndToString s () =
+        Assert.assertEqualString s (URI.toString (valOf (URI.fromString s)))
+
   val suite = Test.labelTests [
     ("path from \"\"",     testPathFromAndToString ""),
     ("path from /",        testPathFromAndToString "/"),
@@ -65,7 +68,20 @@ structure UriTest = struct
     ("key-value to query", testQueryFromListToString [("a", "b")] "a=b"),
     ("key-value to query: slash and question mark",
       testQueryFromListToString [("a", "http://foo@example.com?q")] "a=http://foo@example.com?q"),
-    ("key-value to query: space", testQueryFromListToString [("a", " ")] "a=%20")
+    ("key-value to query: space", testQueryFromListToString [("a", " ")] "a=%20"),
+
+    ("", testUriFromAndToString "http://example.com"),
+    ("", testUriFromAndToString "http://example.com/"),
+    ("", testUriFromAndToString "http://example.com/path"),
+    ("", testUriFromAndToString "http://user-info@example.com:8080/"),
+    ("", testUriFromAndToString "http://user:pass@example.com/"),
+    ("", testUriFromAndToString "http://user%20name:pass@example.com/"),
+    ("", testUriFromAndToString "http://example.com/?query=exists"),
+    ("", testUriFromAndToString "http://example.com/#fragment"),
+    ("", testUriFromAndToString "http://example.com/?query=exists#fragment"),
+    ("", testUriFromAndToString "arn:aws:logs:region:account:log-group:log-group-name:log-stream:log-stream-name"),
+
+    ("terminator", fn () => ())
   ]
 
   fun run () =
