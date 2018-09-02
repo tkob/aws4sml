@@ -1,4 +1,5 @@
 structure HttpClient :> sig
+  exception InvalidResponse of string
 
   val doRequest : { read : 'sock -> Word8Vector.vector,
                     writeAll : 'sock * Word8Vector.vector -> unit }
@@ -6,6 +7,7 @@ structure HttpClient :> sig
                   -> HttpResponse.response
 
 end = struct
+  exception InvalidResponse of string
 
   fun doRequest {read, writeAll} (sock, request) =
         let
@@ -17,7 +19,7 @@ end = struct
                                       inputAll=Stream.inputAll }
         in
           case fromStream strm of
-               NONE => raise Fail "cannot parse response"
+               NONE => raise InvalidResponse (#1 (Stream.inputAll strm))
              | SOME (response, strm') => response
         end
 end

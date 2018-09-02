@@ -1,5 +1,8 @@
 (* {{ metadata.serviceFullName }} *)
 functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
+  exception Http of string * string
+  exception InvalidResponse of string
+
   (*% if 'globalEndpoint' in metadata %*)
   val host = "{{ metadata.globalEndpoint }}"
   (*% else %*)
@@ -255,13 +258,13 @@ functor {{ structure_name }}Fun(val date : unit -> Date.date) = struct
           if String.sub (#status httpResponse, 0) = #"2" then
             (*% if 'output' in operation %*)
             case {{ sml_types[operation.output.shape] }}FromJson jsonResponse of
-                 NONE => raise Fail "invalid aws response"
+                 NONE => raise InvalidResponse (#messageBody httpResponse)
                | SOME response => response
             (*% else %*)
             ()
             (*% endif %*)
           else
-            raise Fail "error status"
+            raise Http (#status httpResponse, #messageBody httpResponse)
         end
   (*%   endif %*)
   (*% endfor %*)
