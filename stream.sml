@@ -7,6 +7,7 @@ structure Stream :> sig
   val inputN : instream * int -> string * instream
   val inputLine : instream -> (string * instream) option
   val inputAll : instream -> string * instream
+  val inputNoExtend : instream -> string * instream
 end = struct
   datatype instream = Nil
                     | Cons of { car : Substring.substring,
@@ -108,6 +109,19 @@ end = struct
                        receive (cdr, car::fragments)
                    | Cons {cdr = ref NONE, ...} =>
                        raise Fail "should never reach here")
+        in
+          receive (strm, [])
+        end
+
+  fun inputNoExtend strm =
+        let
+          fun receive (strm, fragments) =
+                case strm of
+                     Nil => (revcat fragments, Nil)
+                   | Cons {car, cdr = ref (SOME cdr), ...} =>
+                       receive (cdr, car::fragments)
+                   | Cons {car, cdr = cdr as (ref NONE), read} =>
+                       (revcat (car::fragments), Cons {car = Substring.full "", cdr = cdr, read = read})
         in
           receive (strm, [])
         end

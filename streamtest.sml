@@ -62,6 +62,22 @@ structure StreamTest = struct
           fn () => assert expectedLines (lines (s source) [])
         end
 
+  fun testInputNoExtend () =
+        let
+          val source = "abcdefghijklmnopqrstuvwxyz"
+          val strm = fromFun (fromString (source, 2))
+          val (_, _) = inputN (strm, 3)
+          val (actual, strm') = inputNoExtend strm
+          val () = Assert.assertEqualString "abcd" actual
+          val (_, _) = inputN (strm', 7)
+          val (actual, _) = inputNoExtend strm'
+          val () = Assert.assertEqualString "efghijkl" actual
+          val (actual, _) = inputNoExtend strm
+          val () = Assert.assertEqualString "abcdefghijkl" actual
+        in
+          ()
+        end
+
   val suite = Test.labelTests [
     ("test inputAll", testInputAll),
     ("test inputN", testInputN),
@@ -70,7 +86,9 @@ structure StreamTest = struct
     ("inputLine \"abc\"",       testInputLine ["abc\n"]          "abc"),
     ("inputLine \"abc\\n\"",    testInputLine ["abc\n"]          "abc\n"),
     ("inputLine \"abc\\ndef\"", testInputLine ["abc\n", "def\n"] "abc\ndef"),
-    ("inputLine \"a\\n\\nb\"",  testInputLine ["a\n", "\n", "b\n"] "a\n\nb")
+    ("inputLine \"a\\n\\nb\"",  testInputLine ["a\n", "\n", "b\n"] "a\n\nb"),
+    ("inputNoExtend",  testInputNoExtend),
+    ("placeholder", fn () => ())
   ]
 
   fun run () =
