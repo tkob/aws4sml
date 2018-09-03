@@ -4,7 +4,8 @@ local
 
     sha2_sml/libsha2sml.mlb
     hmac.mlb
-    extword8vector.sml
+    extword8vector.mlb
+    extdate.mlb
     httpclient.mlb
 in
     aws4client.sml
