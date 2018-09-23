@@ -1,6 +1,5 @@
 Library
     structure AwsCredentials
-    functor Aws4ClientFun
     structure Aws4Client
 is
     $/basis.cm
